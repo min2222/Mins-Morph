@@ -23,6 +23,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -78,6 +79,21 @@ public class EventHandlerForge
     
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerRespawnEvent event)
+    {
+    	for(ServerPlayer serverPlayer : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+    	{
+    		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
+        	{
+        		if(t.getMorph() != null)
+        		{
+        			t.setMorph(t.getMorph());
+        		}
+        	});
+    	}
+    }
+    
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerLoggedInEvent event)
     {
     	for(ServerPlayer serverPlayer : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
     	{

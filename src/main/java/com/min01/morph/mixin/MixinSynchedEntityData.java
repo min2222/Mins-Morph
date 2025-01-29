@@ -7,14 +7,15 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.server.ServerLifecycleHooks;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SynchedEntityData.class)
 public class MixinSynchedEntityData 
@@ -28,12 +29,16 @@ public class MixinSynchedEntityData
 	{
 		if(this.entity.getId() < 0)
 		{
-			for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers()) 
+			if(ServerLifecycleHooks.getCurrentServer() != null)
 			{
-				List<SynchedEntityData.DataValue<?>> list = this.entity.getEntityData().packDirty();
-				if(list != null)
+				MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+				for(ServerPlayer player : server.getPlayerList().getPlayers()) 
 				{
-					player.connection.connection.send(new ClientboundSetEntityDataPacket(this.entity.getId(), list));
+					List<SynchedEntityData.DataValue<?>> list = this.entity.getEntityData().packDirty();
+					if(list != null)
+					{
+						player.connection.connection.send(new ClientboundSetEntityDataPacket(this.entity.getId(), list));
+					}
 				}
 			}
 		}
