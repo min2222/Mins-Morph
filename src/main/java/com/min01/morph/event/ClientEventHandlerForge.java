@@ -43,8 +43,8 @@ public class ClientEventHandlerForge
 	    		}
         		if(renderer instanceof LivingEntityRenderer)
         		{
-        			LivingEntityRenderer<? super LivingEntity, ?> livingrenderer = (LivingEntityRenderer<? super LivingEntity, ?>) renderer;
-        			livingrenderer.render(living, yaw, event.getPartialTick(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+        			LivingEntityRenderer<? super LivingEntity, ?> livingRenderer = (LivingEntityRenderer<? super LivingEntity, ?>) renderer;
+        			livingRenderer.render(living, yaw, event.getPartialTick(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
         		}
     		}
     	});
