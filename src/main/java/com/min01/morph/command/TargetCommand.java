@@ -39,6 +39,7 @@ public class TargetCommand
 					if(entity instanceof LivingEntity living)
 					{
 						mob.setTarget(living);
+						sourceStack.sendSuccess(() -> Component.literal("Set target of " + player.getName().getString() + " to " + living.getName().getString()), true);
 					}
 					else
 					{
