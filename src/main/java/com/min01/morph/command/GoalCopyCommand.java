@@ -52,7 +52,7 @@ public class GoalCopyCommand
 						if(((IWrappedGoal) goal1).getLastTick() != 0)
 						{
 							((IWrappedGoal) goal).setLastTick(((IWrappedGoal) goal1).getLastTick());
-							sourceStack.sendSuccess(() -> Component.literal("Copied Goal Tick " + ((IWrappedGoal) goal1).getLastTick() + " from " + goal.getGoal().getClass().getSimpleName() + " at Index " + goalIndex + " of " + mob.getDisplayName().getString()), true);
+							sourceStack.sendSuccess(() -> Component.literal("Copied goal tick " + ((IWrappedGoal) goal1).getLastTick() + " from " + goal.getGoal().getClass().getSimpleName() + " at Index " + goalIndex + " of " + mob.getDisplayName().getString()), true);
 							MorphSavedData data = MorphSavedData.get(player.level, player.level.dimension());
 				        	if(data != null)
 				        	{

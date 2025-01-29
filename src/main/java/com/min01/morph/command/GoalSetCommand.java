@@ -47,7 +47,7 @@ public class GoalSetCommand
 					{
 						WrappedGoal goal = list.get(goalIndex);
 						((IWrappedGoal) goal).setLastTick(goalTick);
-						sourceStack.sendSuccess(() -> Component.literal("Set Goal Tick of " + goal.getGoal().getClass().getSimpleName() + " to " + goalTick), true);
+						sourceStack.sendSuccess(() -> Component.literal("Set goal tick of " + goal.getGoal().getClass().getSimpleName() + " to " + goalTick), true);
 						MorphSavedData data = MorphSavedData.get(player.level, player.level.dimension());
 			        	if(data != null)
 			        	{

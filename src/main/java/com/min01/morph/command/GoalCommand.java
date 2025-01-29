@@ -57,7 +57,7 @@ public class GoalCommand
 								((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
 								mob.setTarget(t.getFakeTarget());
 								goal.start();
-								sourceStack.sendSuccess(() -> Component.literal("Triggered Goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
+								sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
 							}
 							else
 							{

@@ -69,11 +69,11 @@ public class MorphCommand
 					t.setPersistent(isPersistent);
 					t.setMorph(living);
 					ForgeEventFactory.onFinalizeSpawn((Mob) living, sourceStack.getLevel(), sourceStack.getLevel().getCurrentDifficultyAt(player.blockPosition()), MobSpawnType.COMMAND, null, null);
-					sourceStack.sendSuccess(() -> Component.literal("Changed Morph Entity of " + player.getDisplayName().getString() + " to " + living.getDisplayName().getString()), true);
+					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + player.getDisplayName().getString() + " to " + living.getDisplayName().getString()), true);
 				}
 				else
 				{
-					sourceStack.sendFailure(Component.literal("Can't Morph to None Living Entity"));
+					sourceStack.sendFailure(Component.literal("Can't morph to none living entity"));
 				}
 			});
 		}
