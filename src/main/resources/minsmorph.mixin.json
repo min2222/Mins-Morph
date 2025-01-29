@@ -12,7 +12,8 @@
 		"MixinEntityGetter",
 		"MixinWrappedGoal",
 		"MixinLevelEntityGetterAdapter",
-		"MixinProjectile"
+		"MixinProjectile",
+		"MixinSynchedEntityData"
 	],
 	"client": [
 		"MixinClientLevel"

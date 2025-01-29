@@ -21,6 +21,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 @Mixin(LivingEntity.class)
@@ -35,6 +37,20 @@ public class MixinLivingEntity
 		{
 			living.discard();
 		}
+	}
+	
+	@Inject(at = @At(value = "HEAD"), method = "isInvertedHealAndHarm", cancellable = true)
+	private void isInvertedHealAndHarm(CallbackInfoReturnable<Boolean> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		{
+    		LivingEntity morph = t.getMorph();
+    		if(morph != null)
+    		{
+    			cir.setReturnValue(morph.isInvertedHealAndHarm());
+    		}
+		});
 	}
 
 	@Inject(at = @At(value = "HEAD"), method = "getHurtSound", cancellable = true)
@@ -120,6 +136,19 @@ public class MixinLivingEntity
     				if(source.getEntity() == morph)
     				{
     					cir.setReturnValue(false);
+    				}
+    			}
+    			if(morph instanceof Mob mob && source.getEntity() instanceof LivingEntity target)
+    			{
+    				for(WrappedGoal goal : mob.targetSelector.getAvailableGoals())
+    				{
+    					if(goal.getGoal() instanceof HurtByTargetGoal)
+    					{
+    						if(target != morph)
+    						{
+        						mob.setTarget(target);
+    						}
+    					}
     				}
     			}
     			morph.hurt(source, damage);
