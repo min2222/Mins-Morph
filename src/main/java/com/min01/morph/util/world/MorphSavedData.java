@@ -58,6 +58,11 @@ public class MorphSavedData extends SavedData
 		nbt.put("Animations", list);
 		return nbt;
 	}
+	
+	public boolean hasAnimation(String animationName)
+	{
+		return this.animationMap.containsValue(animationName);
+	}
 
 	public String getAnimation(String goalName) 
 	{

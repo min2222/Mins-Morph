@@ -87,7 +87,10 @@ public class EventHandlerForge
         				MorphSavedData data = MorphSavedData.get(mob.level);
         	        	if(data != null)
         	        	{
-    	        			data.saveAnimation(f.getName(), f.getName());
+        	        		if(!data.hasAnimation(f.getName()))
+        	        		{
+        	        			data.saveAnimation(f.getName(), f.getName());
+        	        		}
         	        	}
     				}
     			}
