@@ -61,21 +61,21 @@ public class MorphSavedData extends SavedData
 	
 	public boolean hasAnimation(String animationName)
 	{
-		return this.animationMap.containsValue(animationName);
+		return this.animationMap.containsKey(animationName);
 	}
 
-	public String getAnimation(String goalName) 
+	public String getAnimation(String animationName) 
 	{
-		if(this.animationMap.containsKey(goalName))
+		if(this.animationMap.containsKey(animationName))
 		{
-			return this.animationMap.get(goalName);
+			return this.animationMap.get(animationName);
 		}
 		return "";
 	}
 
-	public void saveAnimation(String goalName, String name)
+	public void saveAnimation(String goalName, String animationName)
 	{
-		this.animationMap.put(goalName, name);
+		this.animationMap.put(goalName, animationName);
 		this.setDirty();
 	}
 }

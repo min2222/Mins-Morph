@@ -45,14 +45,14 @@ public class MorphUtil
 		return list;
 	}
     
-    public static void setAnimation(Mob mob, String goalName)
+    public static void setAnimation(Mob mob, String animationName)
     {
 		try
 		{
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
-        		String name = data.getAnimation(goalName);
+        		String name = data.getAnimation(animationName);
         		if(!name.isEmpty())
         		{
         			Field f = mob.getClass().getField(name);
