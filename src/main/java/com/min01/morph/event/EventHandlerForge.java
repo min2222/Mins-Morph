@@ -70,7 +70,7 @@ public class EventHandlerForge
         		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
         		for(WrappedGoal goal : set)
         		{
-        	    	List<String> names = MorphUtil.getUsedAnimations(goal.getGoal());
+        	    	List<String> names = MorphUtil.getAnimations(goal.getGoal());
         	    	for(String name : names)
         	    	{
         				MorphSavedData data = MorphSavedData.get(mob.level);

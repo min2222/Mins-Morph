@@ -48,9 +48,10 @@ public class GoalCommand
 							((IWrappedGoal) goal).setCanUse();
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
 							mob.setTarget(t.getFakeTarget());
-							MorphUtil.invokeSetAnimation(mob, animationName);
+							MorphUtil.setAnimation(mob, animationName);
 							goal.start();
 							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
+							break;
 						}
 					}
 				}

@@ -8,11 +8,13 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import com.min01.morph.misc.IClientLevel;
@@ -30,35 +32,86 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public class MorphUtil 
 {
-	public static List<String> getUsedAnimations(Goal goal)
+	public static List<String> getAnimations(Goal goal)
 	{
 		List<String> list = new ArrayList<>();
+		getFieldsInsideClass(goal.getClass(), fin ->
+		{
+            if(fin.desc.contains("Animation"))
+            {
+	            list.add(fin.name);
+            }
+		});
+		return list;
+	}
+    
+    public static void setAnimation(Mob mob, String goalName)
+    {
+		try
+		{
+			MorphSavedData data = MorphSavedData.get(mob.level);
+        	if(data != null)
+        	{
+        		String name = data.getAnimation(goalName);
+        		if(!name.isEmpty())
+        		{
+        			Field f = mob.getClass().getField(name);
+        			Method m = mob.getClass().getMethod("setAnimation", f.getType());
+        			f.setAccessible(true);
+        			m.invoke(mob, f.get(mob));
+        		}
+        	}
+		}
+		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+		{
+			
+		}
+    }
+    
+	public static void getMethodsInsideClass(Class<?> clazz, Consumer<MethodInsnNode> consumer)
+	{
         try
         {
-    		ClassNode classNode = MorphUtil.getClassNode(goal.getClass());
+    		ClassNode classNode = MorphUtil.getClassNode(clazz);
     		for(MethodNode method : classNode.methods)
     		{
-    			if(method.name.equals("test"))
-    			{
-        		    for(AbstractInsnNode ain : method.instructions.toArray())
-        		    {
-        		        if(ain.getType() == AbstractInsnNode.FIELD_INSN) 
-        		        {
-        		            FieldInsnNode fin = (FieldInsnNode) ain;
-        		            if(fin.desc.contains("Animation"))
-        		            {
-            		            list.add(fin.name);
-        		            }
-        		        }
-        		    }
-    			}
+    		    for(AbstractInsnNode ain : method.instructions.toArray())
+    		    {
+    		        if(ain.getType() == AbstractInsnNode.METHOD_INSN) 
+    		        {
+    		        	MethodInsnNode min = (MethodInsnNode) ain;
+    		            consumer.accept(min);
+    		        }
+    		    }
     		}
-		}
-        catch (IOException e) 
+        }
+        catch (IOException | SecurityException e) 
         {
         	
 		}
-		return list;
+	}
+	
+	public static void getFieldsInsideClass(Class<?> clazz, Consumer<FieldInsnNode> consumer)
+	{
+        try
+        {
+    		ClassNode classNode = MorphUtil.getClassNode(clazz);
+    		for(MethodNode method : classNode.methods)
+    		{
+    		    for(AbstractInsnNode ain : method.instructions.toArray())
+    		    {
+    		        if(ain.getType() == AbstractInsnNode.FIELD_INSN) 
+    		        {
+    		            FieldInsnNode fin = (FieldInsnNode) ain;
+    		            consumer.accept(fin);
+    		        }
+    		    }
+    		}
+        }
+        catch (IOException | SecurityException e) 
+        {
+        	
+		}
 	}
 	
 	//ChatGPT ahhh;
@@ -228,29 +281,6 @@ public class MorphUtil
         mob.level.getProfiler().pop();
         mob.level.getProfiler().pop();
         DebugPackets.sendGoalSelector(mob.level, mob, mob.goalSelector);
-    }
-    
-    public static void invokeSetAnimation(Mob mob, String goalName)
-    {
-		try
-		{
-			MorphSavedData data = MorphSavedData.get(mob.level);
-        	if(data != null)
-        	{
-        		String name = data.getAnimation(goalName);
-        		if(!name.isEmpty())
-        		{
-        			Field f = mob.getClass().getField(name);
-        			Method m = mob.getClass().getMethod("setAnimation", f.getType());
-        			f.setAccessible(true);
-        			m.invoke(mob, f.get(mob));
-        		}
-        	}
-		}
-		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
-		{
-			
-		}
     }
     
     public static void invokeCustomServerAiStep(Mob mob)
