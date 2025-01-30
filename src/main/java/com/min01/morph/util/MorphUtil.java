@@ -1,9 +1,19 @@
 package com.min01.morph.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import com.min01.morph.misc.IClientLevel;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
@@ -13,12 +23,61 @@ import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public class MorphUtil 
 {
+	public static List<String> getUsedAnimations(Goal goal)
+	{
+		List<String> list = new ArrayList<>();
+        try
+        {
+    		ClassNode classNode = MorphUtil.getClassNode(goal.getClass());
+    		for(MethodNode method : classNode.methods)
+    		{
+    			if(method.name.equals("test"))
+    			{
+        		    for(AbstractInsnNode ain : method.instructions.toArray())
+        		    {
+        		        if(ain.getType() == AbstractInsnNode.FIELD_INSN) 
+        		        {
+        		            FieldInsnNode fin = (FieldInsnNode) ain;
+        		            if(fin.desc.contains("Animation"))
+        		            {
+            		            list.add(fin.name);
+        		            }
+        		        }
+        		    }
+    			}
+    		}
+		}
+        catch (IOException e) 
+        {
+        	
+		}
+		return list;
+	}
+	
+	//ChatGPT ahhh;
+    public static ClassNode getClassNode(Class<?> clazz) throws IOException
+    {
+        String className = clazz.getName().replace('.', '/') + ".class";
+        try(InputStream classStream = clazz.getClassLoader().getResourceAsStream(className))
+        {
+            if(classStream == null)
+            {
+                throw new IOException("Class not found: " + clazz.getName());
+            }
+            ClassReader classReader = new ClassReader(classStream);
+            ClassNode classNode = new ClassNode();
+            classReader.accept(classNode, 0);
+            return classNode;
+        }
+    }
+    
     public static void tick(LivingEntity player, LivingEntity morph)
     {
     	morph.getPersistentData().putUUID("MorphOwnerUUID", player.getUUID());

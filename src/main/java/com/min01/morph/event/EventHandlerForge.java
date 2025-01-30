@@ -3,21 +3,28 @@ package com.min01.morph.event;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.google.common.collect.Lists;
 import com.min01.morph.MinsMorph;
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.command.GoalCommand;
 import com.min01.morph.command.MorphCommand;
 import com.min01.morph.command.TargetCommand;
+import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.util.MorphUtil;
+import com.min01.morph.util.world.MorphSavedData;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -50,6 +57,29 @@ public class EventHandlerForge
     		if(entityHit.getEntity().getId() < 0)
     		{
             	event.setImpactResult(ImpactResult.SKIP_ENTITY);
+    		}
+    	}
+    }
+    
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event)
+    {
+    	if(event.getEntity() instanceof Mob mob)
+    	{
+    		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
+    		List<WrappedGoal> list = Lists.newArrayList(set);
+    		for(WrappedGoal goal : set)
+    		{
+    			((IWrappedGoal)goal).setEntity(mob);
+    	    	List<String> names = MorphUtil.getUsedAnimations(goal.getGoal());
+    	    	for(String name : names)
+    	    	{
+    				MorphSavedData data = MorphSavedData.get(mob.level);
+    	        	if(data != null)
+    	        	{
+    	        		data.saveAnimation(list.indexOf(goal), name);
+    	        	}
+    	    	}
     		}
     	}
     }

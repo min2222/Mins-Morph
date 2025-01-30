@@ -1,9 +1,5 @@
 package com.min01.morph.mixin;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.min01.morph.misc.IWrappedGoal;
-import com.min01.morph.util.world.MorphSavedData;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -29,41 +24,6 @@ public class MixinWrappedGoal implements IWrappedGoal
 	
 	@Unique
 	private boolean canUse;
-	
-	@Unique
-	private int index;
-	
-	@Inject(at = @At(value = "HEAD"), method = "start", cancellable = true)
-	private void start(CallbackInfo ci)
-	{
-		if(this.mob != null && this.mob.getId() > 0)
-		{
-			try
-			{
-				Method m = this.mob.getClass().getMethod("getAnimation");
-				Object obj = m.invoke(this.mob);
-				for(Field f : this.mob.getClass().getDeclaredFields())
-				{
-					if(f.getType().getSimpleName().contains("Animation"))
-					{
-						f.setAccessible(true);
-						if(obj == f.get(this.mob))
-						{
-							MorphSavedData data = MorphSavedData.get(this.mob.level);
-				        	if(data != null)
-				        	{
-				        		data.saveAnimation(this.index, f.getName());
-				        	}
-						}
-					}
-				}
-			}
-			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
-			{
-				
-			}
-		}
-	}
 	
 	@Inject(at = @At(value = "RETURN"), method = "canUse", cancellable = true)
 	private void canUse(CallbackInfoReturnable<Boolean> cir)
@@ -113,11 +73,5 @@ public class MixinWrappedGoal implements IWrappedGoal
 	public void setCanUse() 
 	{
 		this.canUse = true;
-	}
-	
-	@Override
-	public void setIndex(int index) 
-	{
-		this.index = index;
 	}
 }
