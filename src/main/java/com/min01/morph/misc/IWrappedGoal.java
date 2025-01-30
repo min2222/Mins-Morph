@@ -10,8 +10,4 @@ public interface IWrappedGoal
 	public void setFakeTarget(LivingEntity target);
 	
 	public void setCanUse();
-	
-	public void setLastTick(int tick);
-	
-	public int getLastTick();
 }

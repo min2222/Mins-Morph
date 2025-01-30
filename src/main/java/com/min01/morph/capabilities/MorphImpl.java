@@ -1,24 +1,16 @@
 package com.min01.morph.capabilities;
 
-import java.util.List;
-import java.util.Set;
-
-import com.google.common.collect.Lists;
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.event.EventHandlerForge;
-import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.UpdateMorphPacket;
 import com.min01.morph.util.MorphUtil;
-import com.min01.morph.world.MorphSavedData;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -118,25 +110,7 @@ public class MorphImpl implements IMorphCapability
 			}
 			this.setType(morph.getType());
 			EventHandlerForge.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
-			for(Class<?> clazz : morph.getClass().getDeclaredClasses())
-			{
-				EventHandlerForge.ENTITY_MAP2.put(clazz.hashCode(), morph);
-			}
-			MorphSavedData data = MorphSavedData.get(this.entity.level, this.entity.level.dimension());
-        	if(data != null)
-        	{
-        		Set<WrappedGoal> set = ((Mob)morph).goalSelector.getAvailableGoals();
-    			List<WrappedGoal> list = Lists.newArrayList(set);
-        		for(int i = 0; i < list.size(); i++)
-        		{
-        			IWrappedGoal goal = (IWrappedGoal) list.get(i);
-	        		int tick = data.getGoalTick(morph.getType(), i);
-	        		if(tick != 0)
-	        		{
-		        		goal.setLastTick(tick);
-	        		}
-        		}
-        	}
+			EventHandlerForge.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
 		}
 		this.sendUpdataPacket();
 	}

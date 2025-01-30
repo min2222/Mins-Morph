@@ -25,23 +25,8 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Unique
 	private boolean canUse;
 	
-	@Unique
-	private int tick;
-	
-	@Unique
-	private int lastTick;
-	
 	@Inject(at = @At(value = "RETURN"), method = "canUse", cancellable = true)
 	private void canUse(CallbackInfoReturnable<Boolean> cir)
-	{
-		if(this.mob != null && this.mob.getId() < 0)
-		{
-			cir.setReturnValue(cir.getReturnValue() || this.canUse);
-		}
-	}
-	
-	@Inject(at = @At(value = "RETURN"), method = "canContinueToUse", cancellable = true)
-	private void canContinueToUse(CallbackInfoReturnable<Boolean> cir)
 	{
 		if(this.mob != null && this.mob.getId() < 0)
 		{
@@ -52,13 +37,8 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Inject(at = @At(value = "HEAD"), method = "tick", cancellable = true)
 	private void tick(CallbackInfo ci)
 	{
-		this.tick++;
-		if(this.mob != null && this.mob.getId() < 0 && this.lastTick != 0)
+		if(this.mob != null && this.mob.getId() < 0)
 		{
-			if(this.tick == this.lastTick)
-			{
-				WrappedGoal.class.cast(this).stop();
-			}
 			if(this.target != null)
 			{
 				this.mob.setTarget(this.target);
@@ -74,12 +54,6 @@ public class MixinWrappedGoal implements IWrappedGoal
 			this.mob.setTarget(null);
 			this.canUse = false;
 			this.target = null;
-			this.tick = 0;
-		}
-		if(this.tick != 0)
-		{
-			this.lastTick = this.tick;
-			this.tick = 0;
 		}
 	}
 	
@@ -99,17 +73,5 @@ public class MixinWrappedGoal implements IWrappedGoal
 	public void setCanUse() 
 	{
 		this.canUse = true;
-	}
-	
-	@Override
-	public void setLastTick(int tick) 
-	{
-		this.lastTick = tick;
-	}
-	
-	@Override
-	public int getLastTick() 
-	{
-		return this.lastTick;
 	}
 }

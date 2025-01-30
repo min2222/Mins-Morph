@@ -7,8 +7,6 @@ import java.util.Map;
 import com.min01.morph.MinsMorph;
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.command.GoalCommand;
-import com.min01.morph.command.GoalCopyCommand;
-import com.min01.morph.command.GoalSetCommand;
 import com.min01.morph.command.MorphCommand;
 import com.min01.morph.command.TargetCommand;
 import com.min01.morph.util.MorphUtil;
@@ -41,8 +39,6 @@ public class EventHandlerForge
     {
     	MorphCommand.register(event.getDispatcher(), event.getBuildContext());
     	GoalCommand.register(event.getDispatcher());
-    	GoalCopyCommand.register(event.getDispatcher());
-    	GoalSetCommand.register(event.getDispatcher());
     	TargetCommand.register(event.getDispatcher());
     }
     

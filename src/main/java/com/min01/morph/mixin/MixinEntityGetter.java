@@ -22,29 +22,30 @@ public interface MixinEntityGetter extends EntityGetter
 	{
 		List<T> list = this.getEntities(EntityTypeTest.forClass(p_45979_), p_45980_, p_45981_);
 		MySecurityManager manager = new MySecurityManager();
-		Entity entity1 = null;
-		Entity entity2 = null;
 		Class<?>[] ctx = manager.getContext();
-		int i = 0;
-		int i2 = 0;
-		do
+		for(Class<?> clazz : ctx)
 		{
-			entity1 = EventHandlerForge.ENTITY_MAP.get(ctx[i].hashCode());
-			i++;
-		}
-		while(entity1 == null && i < ctx.length);
-		do
-		{
-			entity2 = EventHandlerForge.ENTITY_MAP2.get(ctx[i2].hashCode());
-			i2++;
-		}
-		while(entity2 == null && i2 < ctx.length);
-		Entity entity = entity1 != null ? entity1 : entity2;
-		if(entity != null)
-		{
-			if(MorphUtil.getMorphOwner(entity) != null)
+			if(EventHandlerForge.ENTITY_MAP.containsKey(clazz.hashCode()))
 			{
-				list.removeIf(t -> t == MorphUtil.getMorphOwner(entity));
+				Entity entity = EventHandlerForge.ENTITY_MAP.get(clazz.hashCode());
+				if(entity != null)
+				{
+					if(MorphUtil.getMorphOwner(entity) != null)
+					{
+						list.removeIf(t -> t == MorphUtil.getMorphOwner(entity));
+					}
+				}
+			}
+			else if(EventHandlerForge.ENTITY_MAP2.containsKey(clazz.hashCode()))
+			{
+				Entity entity = EventHandlerForge.ENTITY_MAP2.get(clazz.hashCode());
+				if(entity != null)
+				{
+					if(MorphUtil.getMorphOwner(entity) != null)
+					{
+						list.removeIf(t -> t == MorphUtil.getMorphOwner(entity));
+					}
+				}
 			}
 		}
 		return list;
@@ -55,35 +56,36 @@ public interface MixinEntityGetter extends EntityGetter
 	{
 		List<Entity> list = this.getEntities(p_45934_, p_45935_, EntitySelector.NO_SPECTATORS);
 		MySecurityManager manager = new MySecurityManager();
-		Entity entity1 = null;
-		Entity entity2 = null;
 		Class<?>[] ctx = manager.getContext();
-		int i = 0;
-		int i2 = 0;
-		do
+		for(Class<?> clazz : ctx)
 		{
-			entity1 = EventHandlerForge.ENTITY_MAP.get(ctx[i].hashCode());
-			i++;
-		}
-		while(entity1 == null && i < ctx.length);
-		do
-		{
-			entity2 = EventHandlerForge.ENTITY_MAP2.get(ctx[i2].hashCode());
-			i2++;
-		}
-		while(entity2 == null && i2 < ctx.length);
-		Entity entity = entity1 != null ? entity1 : entity2;
-		if(entity != null)
-		{
-			if(MorphUtil.getMorphOwner(entity) != null)
+			if(EventHandlerForge.ENTITY_MAP.containsKey(clazz.hashCode()))
 			{
-				list.removeIf(t -> t == MorphUtil.getMorphOwner(entity));
+				Entity entity = EventHandlerForge.ENTITY_MAP.get(clazz.hashCode());
+				if(entity != null)
+				{
+					if(MorphUtil.getMorphOwner(entity) != null)
+					{
+						list.removeIf(t -> t == MorphUtil.getMorphOwner(entity));
+					}
+				}
+			}
+			else if(EventHandlerForge.ENTITY_MAP2.containsKey(clazz.hashCode()))
+			{
+				Entity entity = EventHandlerForge.ENTITY_MAP2.get(clazz.hashCode());
+				if(entity != null)
+				{
+					if(MorphUtil.getMorphOwner(entity) != null)
+					{
+						list.removeIf(t -> t == MorphUtil.getMorphOwner(entity));
+					}
+				}
 			}
 		}
 		return list;
 	}
-	
-	@SuppressWarnings({ "removal"})
+
+	@SuppressWarnings("removal")
 	static class MySecurityManager extends SecurityManager
 	{
 		public Class<?>[] getContext()

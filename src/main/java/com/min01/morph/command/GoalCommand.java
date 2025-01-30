@@ -51,18 +51,11 @@ public class GoalCommand
 						WrappedGoal goal = list.get(goalIndex);
 						if(!(goal.getGoal() instanceof LookAtPlayerGoal) && !(goal.getGoal() instanceof LongDistancePatrolGoal) && !(goal.getGoal() instanceof ObtainRaidLeaderBannerGoal) && !(goal.getGoal() instanceof StrollThroughVillageGoal))
 						{
-							if(((IWrappedGoal) goal).getLastTick() != 0)
-							{
-								((IWrappedGoal) goal).setCanUse();
-								((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
-								mob.setTarget(t.getFakeTarget());
-								goal.start();
-								sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
-							}
-							else
-							{
-								sourceStack.sendFailure(Component.literal("Goal tick is not set!"));
-							}
+							((IWrappedGoal) goal).setCanUse();
+							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
+							mob.setTarget(t.getFakeTarget());
+							goal.start();
+							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
 						}
 						else
 						{
