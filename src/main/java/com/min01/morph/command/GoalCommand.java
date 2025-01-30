@@ -1,15 +1,12 @@
 package com.min01.morph.command;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
-import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.util.MorphUtil;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -17,11 +14,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.StrollThroughVillageGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
-import net.minecraft.world.entity.monster.PatrollingMonster.LongDistancePatrolGoal;
-import net.minecraft.world.entity.raid.Raider.ObtainRaidLeaderBannerGoal;
 
 public class GoalCommand 
 {
@@ -30,13 +23,16 @@ public class GoalCommand
 		dispatcher.register(Commands.literal("goal").requires((sourceStack) -> 
 		{	
 			return sourceStack.hasPermission(2);
-		}).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalIndex", IntegerArgumentType.integer(0)).executes((commandCtx) ->
+		}).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).then(Commands.argument("animationName", StringArgumentType.string()).executes((commandCtx) ->
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), IntegerArgumentType.getInteger(commandCtx, "goalIndex"));
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "animationName"));
+		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).executes((commandCtx) ->
+		{
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "goalName"));
 		}))));
 	}
 	
-	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, int goalIndex)
+	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String animationName)
 	{
 		for(ServerPlayer player : players)
 		{
@@ -45,28 +41,17 @@ public class GoalCommand
 				if(t.getMorph() != null)
 				{
 					Mob mob = (Mob) t.getMorph();
-					Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
-					List<WrappedGoal> list = Lists.newArrayList(set);
-					if(set.size() > goalIndex)
+					for(WrappedGoal goal : mob.goalSelector.getAvailableGoals())
 					{
-						WrappedGoal goal = list.get(goalIndex);
-						if(!(goal.getGoal() instanceof LookAtPlayerGoal) && !(goal.getGoal() instanceof LongDistancePatrolGoal) && !(goal.getGoal() instanceof ObtainRaidLeaderBannerGoal) && !(goal.getGoal() instanceof StrollThroughVillageGoal))
+						if(goal.getGoal().getClass().getSimpleName().equals(goalName))
 						{
 							((IWrappedGoal) goal).setCanUse();
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
 							mob.setTarget(t.getFakeTarget());
-							MorphUtil.invokeSetAnimation(mob, goalIndex);
+							MorphUtil.invokeSetAnimation(mob, animationName);
 							goal.start();
-							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
+							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
 						}
-						else
-						{
-							sourceStack.sendFailure(Component.literal("This goal will cause crash!"));
-						}
-					}
-					else
-					{
-						sourceStack.sendFailure(Component.literal("Index is too large!"));
 					}
 				}
 				else

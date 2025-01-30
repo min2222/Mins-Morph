@@ -136,7 +136,6 @@ public class MixinLivingEntity
     					cir.setReturnValue(false);
     				}
     			}
-    			morph.hurt(source, damage);
     		}
 		});
 		if(MorphUtil.getMorphOwner(living) != null)

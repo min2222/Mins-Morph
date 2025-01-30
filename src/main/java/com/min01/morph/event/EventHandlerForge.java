@@ -1,17 +1,16 @@
 package com.min01.morph.event;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Lists;
 import com.min01.morph.MinsMorph;
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.command.GoalCommand;
 import com.min01.morph.command.MorphCommand;
 import com.min01.morph.command.TargetCommand;
-import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.util.MorphUtil;
 import com.min01.morph.util.world.MorphSavedData;
 
@@ -66,20 +65,32 @@ public class EventHandlerForge
     {
     	if(event.getEntity() instanceof Mob mob)
     	{
-    		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
-    		List<WrappedGoal> list = Lists.newArrayList(set);
-    		for(WrappedGoal goal : set)
+    		if(!mob.level.isClientSide)
     		{
-    			((IWrappedGoal)goal).setEntity(mob);
-    	    	List<String> names = MorphUtil.getUsedAnimations(goal.getGoal());
-    	    	for(String name : names)
-    	    	{
-    				MorphSavedData data = MorphSavedData.get(mob.level);
-    	        	if(data != null)
-    	        	{
-    	        		data.saveAnimation(list.indexOf(goal), name);
-    	        	}
-    	    	}
+        		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
+        		for(WrappedGoal goal : set)
+        		{
+        	    	List<String> names = MorphUtil.getUsedAnimations(goal.getGoal());
+        	    	for(String name : names)
+        	    	{
+        				MorphSavedData data = MorphSavedData.get(mob.level);
+        	        	if(data != null)
+        	        	{
+        	        		data.saveAnimation(goal.getGoal().getClass().getSimpleName(), name);
+        	        	}
+        	    	}
+        		}
+    			for(Field f : mob.getClass().getDeclaredFields())
+    			{
+    				if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
+    				{
+        				MorphSavedData data = MorphSavedData.get(mob.level);
+        	        	if(data != null)
+        	        	{
+    	        			data.saveAnimation(f.getName(), f.getName());
+        	        	}
+    				}
+    			}
     		}
     	}
     }

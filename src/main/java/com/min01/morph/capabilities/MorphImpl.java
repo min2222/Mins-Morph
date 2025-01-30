@@ -3,6 +3,7 @@ package com.min01.morph.capabilities;
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.event.EventHandlerForge;
+import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.UpdateMorphPacket;
 import com.min01.morph.util.MorphUtil;
@@ -11,6 +12,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -111,6 +114,13 @@ public class MorphImpl implements IMorphCapability
 			this.setType(morph.getType());
 			EventHandlerForge.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
 			EventHandlerForge.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
+			if(morph instanceof Mob mob)
+			{
+				for(WrappedGoal goal : mob.goalSelector.getAvailableGoals())
+				{
+	    			((IWrappedGoal)goal).setEntity(mob);
+				}
+			}
 		}
 		this.sendUpdataPacket();
 	}

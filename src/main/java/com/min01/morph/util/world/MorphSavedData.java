@@ -15,7 +15,7 @@ public class MorphSavedData extends SavedData
 {
 	public static final String NAME = "morph_data";
 	
-	private Map<Integer, String> animationMap = new HashMap<>();
+	private Map<String, String> animationMap = new HashMap<>();
 	
     public static MorphSavedData get(Level level)
     {
@@ -35,9 +35,9 @@ public class MorphSavedData extends SavedData
 		for(int i = 0; i < list.size(); ++i)
 		{
 			CompoundTag tag = list.getCompound(i);
-			int goalIndex = tag.getInt("Index");
-			String name = tag.getString("AnimationName");
-			data.saveAnimation(goalIndex, name);
+			String goalName = tag.getString("GoalName");
+			String animationName = tag.getString("AnimationName");
+			data.saveAnimation(goalName, animationName);
 		}
         return data;
     }
@@ -46,31 +46,31 @@ public class MorphSavedData extends SavedData
 	public CompoundTag save(CompoundTag nbt)
 	{
 		ListTag list = new ListTag();
-		for(Entry<Integer, String> entry : this.animationMap.entrySet())
+		for(Entry<String, String> entry : this.animationMap.entrySet())
 		{
-			int index = entry.getKey();
-			String name = entry.getValue();
+			String goalName = entry.getKey();
+			String animationName = entry.getValue();
 			CompoundTag tag = new CompoundTag();
-			tag.putInt("Index", index);
-			tag.putString("AnimationName", name);
+			tag.putString("GoalName", goalName);
+			tag.putString("AnimationName", animationName);
 			list.add(tag);
 		}
 		nbt.put("Animations", list);
 		return nbt;
 	}
 
-	public String getAnimation(int goalIndex) 
+	public String getAnimation(String goalName) 
 	{
-		if(this.animationMap.containsKey(goalIndex))
+		if(this.animationMap.containsKey(goalName))
 		{
-			return this.animationMap.get(goalIndex);
+			return this.animationMap.get(goalName);
 		}
 		return "";
 	}
 
-	public void saveAnimation(int goalIndex, String name)
+	public void saveAnimation(String goalName, String name)
 	{
-		this.animationMap.put(goalIndex, name);
+		this.animationMap.put(goalName, name);
 		this.setDirty();
 	}
 }

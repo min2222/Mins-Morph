@@ -1,6 +1,8 @@
 package com.min01.morph.mixin;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -11,6 +13,7 @@ import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 
 @Mixin(WrappedGoal.class)
@@ -25,12 +28,23 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Unique
 	private boolean canUse;
 	
+	@Shadow
+	@Final
+	private Goal goal;
+	
 	@Inject(at = @At(value = "RETURN"), method = "canUse", cancellable = true)
 	private void canUse(CallbackInfoReturnable<Boolean> cir)
 	{
 		if(this.mob != null && this.mob.getId() < 0)
 		{
-			cir.setReturnValue(cir.getReturnValue() || this.canUse);
+			if(this.mob.getClass().getSimpleName().equals("EntityCorpseWarlock"))
+			{
+				cir.setReturnValue(cir.getReturnValue() || this.canUse);
+			}
+			else
+			{
+				cir.setReturnValue(this.canUse);
+			}
 		}
 	}
 	

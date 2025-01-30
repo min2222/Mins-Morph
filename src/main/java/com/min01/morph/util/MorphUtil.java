@@ -230,14 +230,14 @@ public class MorphUtil
         DebugPackets.sendGoalSelector(mob.level, mob, mob.goalSelector);
     }
     
-    public static void invokeSetAnimation(Mob mob, int goalIndex)
+    public static void invokeSetAnimation(Mob mob, String goalName)
     {
 		try
 		{
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
-        		String name = data.getAnimation(goalIndex);
+        		String name = data.getAnimation(goalName);
         		if(!name.isEmpty())
         		{
         			Field f = mob.getClass().getField(name);
