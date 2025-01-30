@@ -7,6 +7,7 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.misc.IWrappedGoal;
+import com.min01.morph.util.MorphUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
@@ -54,6 +55,7 @@ public class GoalCommand
 							((IWrappedGoal) goal).setCanUse();
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
 							mob.setTarget(t.getFakeTarget());
+							MorphUtil.invokeSetAnimation(mob, goalIndex);
 							goal.start();
 							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
 						}

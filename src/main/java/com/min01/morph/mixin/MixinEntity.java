@@ -50,25 +50,6 @@ public class MixinEntity
 		}
 	}
 	
-	/*@Inject(at = @At(value = "HEAD"), method = "startRiding(Lnet/minecraft/world/entity/Entity;)Z", cancellable = true)
-	private void startRiding(Entity entity, CallbackInfoReturnable<Boolean> cir)
-	{
-		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
-		{
-			cir.cancel();
-			MorphUtil.getMorphOwner(Entity.class.cast(this)).startRiding(entity);
-		}
-	}
-	
-	@Inject(at = @At(value = "HEAD"), method = "stopRiding", cancellable = true)
-	private void stopRiding(CallbackInfo ci)
-	{
-		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
-		{
-			MorphUtil.getMorphOwner(Entity.class.cast(this)).stopRiding();
-		}
-	}*/
-	
 	@Inject(at = @At(value = "HEAD"), method = "fireImmune", cancellable = true)
 	private void fireImmune(CallbackInfoReturnable<Boolean> cir)
 	{

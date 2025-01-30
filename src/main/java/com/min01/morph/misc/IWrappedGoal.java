@@ -10,4 +10,6 @@ public interface IWrappedGoal
 	public void setFakeTarget(LivingEntity target);
 	
 	public void setCanUse();
+	
+	public void setIndex(int index);
 }

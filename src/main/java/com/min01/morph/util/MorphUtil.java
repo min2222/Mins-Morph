@@ -1,10 +1,13 @@
 package com.min01.morph.util;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
 import com.min01.morph.misc.IClientLevel;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
+import com.min01.morph.util.world.MorphSavedData;
 
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
@@ -166,6 +169,29 @@ public class MorphUtil
         mob.level.getProfiler().pop();
         mob.level.getProfiler().pop();
         DebugPackets.sendGoalSelector(mob.level, mob, mob.goalSelector);
+    }
+    
+    public static void invokeSetAnimation(Mob mob, int goalIndex)
+    {
+		try
+		{
+			MorphSavedData data = MorphSavedData.get(mob.level);
+        	if(data != null)
+        	{
+        		String name = data.getAnimation(goalIndex);
+        		if(!name.isEmpty())
+        		{
+        			Field f = mob.getClass().getField(name);
+        			Method m = mob.getClass().getMethod("setAnimation", f.getType());
+        			f.setAccessible(true);
+        			m.invoke(mob, f.get(mob));
+        		}
+        	}
+		}
+		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+		{
+			
+		}
     }
     
     public static void invokeCustomServerAiStep(Mob mob)
