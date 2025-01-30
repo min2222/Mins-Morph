@@ -44,7 +44,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 				Object obj = m.invoke(this.mob);
 				for(Field f : this.mob.getClass().getDeclaredFields())
 				{
-					if(f.getType().getSimpleName().equals("Animation"))
+					if(f.getType().getSimpleName().contains("Animation"))
 					{
 						f.setAccessible(true);
 						if(obj == f.get(this.mob))
