@@ -46,7 +46,8 @@ public class MixinWrappedGoal implements IWrappedGoal
 				{
 					if(f.getType().getSimpleName().equals("Animation"))
 					{
-						if(obj == f.get(obj))
+						f.setAccessible(true);
+						if(obj == f.get(this.mob))
 						{
 							MorphSavedData data = MorphSavedData.get(this.mob.level);
 				        	if(data != null)
