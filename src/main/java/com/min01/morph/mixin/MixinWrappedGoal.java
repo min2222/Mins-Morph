@@ -30,14 +30,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 	{
 		if(this.mob != null && this.mob.getId() < 0)
 		{
-			if(this.mob.getClass().getSimpleName().equals("EntityCorpseWarlock"))
-			{
-				cir.setReturnValue(cir.getReturnValue() || this.canUse);
-			}
-			else
-			{
-				cir.setReturnValue(this.canUse);
-			}
+			cir.setReturnValue(cir.getReturnValue() || this.canUse);
 		}
 	}
 	
