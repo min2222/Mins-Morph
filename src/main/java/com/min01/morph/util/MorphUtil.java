@@ -16,6 +16,7 @@ import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -26,7 +27,7 @@ public class MorphUtil
 	public static final Map<Integer, Entity> ENTITY_MAP = new HashMap<>();
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
 	
-	public static final List<String> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR.getDescriptionId(), Attributes.ARMOR_TOUGHNESS.getDescriptionId(), Attributes.ATTACK_DAMAGE.getDescriptionId(), Attributes.ATTACK_KNOCKBACK.getDescriptionId(), Attributes.FLYING_SPEED.getDescriptionId(), Attributes.FOLLOW_RANGE.getDescriptionId(), Attributes.JUMP_STRENGTH.getDescriptionId(), Attributes.KNOCKBACK_RESISTANCE.getDescriptionId(), Attributes.MAX_HEALTH.getDescriptionId());
+	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
     
     public static void setAnimation(Mob mob, String animationName)
     {
