@@ -16,7 +16,6 @@ import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.network.protocol.game.DebugPackets;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -44,22 +43,6 @@ public class MorphUtil
 			m.invoke(mob, f.get(mob));
 		}
 		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
-		{
-			
-		}
-    }
-    
-    @SuppressWarnings("unchecked")
-	public static <T> void setData(Mob mob, String dataName, int dataValue)
-    {
-		try
-		{
-			Field f = mob.getClass().getField(dataName);
-			f.setAccessible(true);
-			EntityDataAccessor<Integer> accessor = (EntityDataAccessor<Integer>) f.get(mob);
-	    	mob.getEntityData().set(accessor, dataValue);
-		}
-		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException e)
 		{
 			
 		}
@@ -93,19 +76,6 @@ public class MorphUtil
 		for(Field f : mob.getClass().getDeclaredFields())
 		{
 			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
-			{
-				list.add(f.getName());
-			}
-		}
-		return list;
-	}
-	
-	public static List<String> getDatas(Mob mob)
-	{
-		List<String> list = new ArrayList<>();
-		for(Field f : mob.getClass().getDeclaredFields())
-		{
-			if(f.getType().getSimpleName().equals("EntityDataAccessor") && !f.getType().isArray())
 			{
 				list.add(f.getName());
 			}

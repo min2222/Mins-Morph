@@ -133,7 +133,6 @@ public class MorphImpl implements IMorphCapability
         	{
     			data.saveGoal(mob.getClass().getSimpleName(), MorphUtil.getGoals(mob));
     			data.saveAnimation(mob.getClass().getSimpleName(), MorphUtil.getAnimations(mob));
-    			data.saveData(mob.getClass().getSimpleName(), MorphUtil.getDatas(mob));
         	}
 			ForgeEventFactory.onFinalizeSpawn((Mob) mob, (ServerLevelAccessor) this.entity.level, this.entity.level.getCurrentDifficultyAt(this.entity.blockPosition()), MobSpawnType.COMMAND, null, null);
 		}
