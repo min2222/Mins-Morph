@@ -4,9 +4,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.google.common.collect.Lists;
 import com.min01.morph.misc.IClientLevel;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
 
@@ -14,6 +16,8 @@ import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
@@ -22,6 +26,8 @@ public class MorphUtil
 {
 	public static final Map<Integer, Entity> ENTITY_MAP = new HashMap<>();
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
+	
+	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
     
     public static void setAnimation(Mob mob, String animationName)
     {

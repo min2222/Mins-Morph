@@ -24,8 +24,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 @Mixin(LivingEntity.class)
@@ -61,7 +59,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(attribute != ForgeMod.BLOCK_REACH.get() && attribute != ForgeMod.ENTITY_REACH.get() && attribute != Attributes.ATTACK_SPEED && attribute != Attributes.MOVEMENT_SPEED && attribute != Attributes.LUCK)
+    			if(MorphUtil.ATTRIBUTES.contains(attribute))
     			{
         			cir.setReturnValue(morph.getAttribute(attribute));
     			}
@@ -78,7 +76,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(holder.value() != ForgeMod.BLOCK_REACH.get() && holder.value() != ForgeMod.ENTITY_REACH.get() && holder.value() != Attributes.ATTACK_SPEED && holder.value() != Attributes.MOVEMENT_SPEED && holder.value() != Attributes.LUCK)
+    			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
     			{
     	   			cir.setReturnValue(morph.getAttributeValue(holder));
     			}
@@ -95,7 +93,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(attribute != ForgeMod.BLOCK_REACH.get() && attribute != ForgeMod.ENTITY_REACH.get() && attribute != Attributes.ATTACK_SPEED && attribute != Attributes.MOVEMENT_SPEED && attribute != Attributes.LUCK)
+    			if(MorphUtil.ATTRIBUTES.contains(attribute))
     			{
         			cir.setReturnValue(morph.getAttributeValue(attribute));	
     			}
@@ -112,7 +110,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(holder.value() != ForgeMod.BLOCK_REACH.get() && holder.value() != ForgeMod.ENTITY_REACH.get() && holder.value() != Attributes.ATTACK_SPEED && holder.value() != Attributes.MOVEMENT_SPEED && holder.value() != Attributes.LUCK)
+    			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
     			{
         			cir.setReturnValue(morph.getAttributeBaseValue(holder));
     			}
@@ -129,7 +127,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(attribute != ForgeMod.BLOCK_REACH.get() && attribute != ForgeMod.ENTITY_REACH.get() && attribute != Attributes.ATTACK_SPEED && attribute != Attributes.MOVEMENT_SPEED && attribute != Attributes.LUCK)
+    			if(MorphUtil.ATTRIBUTES.contains(attribute))
     			{
         			cir.setReturnValue(morph.getAttributeBaseValue(attribute));
     			}

@@ -152,7 +152,11 @@ public class MorphImpl implements IMorphCapability
         			{
             			goalName = goal.getGoal().getClass().getSuperclass().getSimpleName();
         			}
-        			list1.add(goalName + goals.indexOf(goal));
+        			if(list1.contains(goalName))
+        			{
+        				goalName = goalName + goals.indexOf(goal);
+        			}
+        			list1.add(goalName);
         		}
     			for(Field f : mob.getClass().getDeclaredFields())
     			{

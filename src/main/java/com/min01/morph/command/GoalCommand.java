@@ -92,7 +92,12 @@ public class GoalCommand
 					{
 						int index = list.indexOf(goal);
 						char lastChar = goalName.charAt(goalName.length() - 1);
-						if(index == Character.getNumericValue(lastChar))
+	        			String name = goal.getGoal().getClass().getSimpleName();
+	        			if(goal.getGoal().getClass().isAnonymousClass())
+	        			{
+	        				name = goal.getGoal().getClass().getSuperclass().getSimpleName();
+	        			}
+						if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
 						{
 							((IWrappedGoal) goal).setCanUse();
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
