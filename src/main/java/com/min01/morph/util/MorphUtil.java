@@ -145,7 +145,7 @@ public class MorphUtil
         morph.setOnGround(player.onGround());
         morph.setSwimming(player.isSwimming());
         morph.setSprinting(player.isSprinting());
-        
+
         morph.hurtTime = player.hurtTime;
         morph.deathTime = player.deathTime;
         morph.fallDistance = player.fallDistance;

@@ -124,7 +124,6 @@ public class MorphImpl implements IMorphCapability
 	    		int number = this.entity.level.random.nextInt(1, 1000);
 	        	morph.setId(-number);
 			}
-			this.entity.setHealth(morph.getMaxHealth());
 			this.setType(morph.getType());
 			this.setup((Mob) morph);
 			MorphUtil.ENTITY_MAP.put(morph.getClass().hashCode(), morph);

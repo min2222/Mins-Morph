@@ -39,6 +39,16 @@ public class MixinLivingEntity
 			living.discard();
 		}
 	}
+	
+	@Inject(at = @At(value = "HEAD"), method = "getHealth", cancellable = true)
+	private void getHealth(CallbackInfoReturnable<Float> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		if(MorphUtil.getMorphOwner(living) != null)
+		{
+			cir.setReturnValue(((LivingEntity) MorphUtil.getMorphOwner(living)).getHealth());
+		}
+	}
 
 	@Inject(at = @At(value = "HEAD"), method = "getAttribute", cancellable = true)
 	private void getAttribute(Attribute attribute, CallbackInfoReturnable<AttributeInstance> cir)
