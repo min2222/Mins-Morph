@@ -20,7 +20,9 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import software.bernie.geckolib.core.animation.RawAnimation;
 
 public class MorphUtil 
 {
@@ -41,6 +43,39 @@ public class MorphUtil
 		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
 		{
 			
+		}
+    }
+    
+    public static void setAnimationGeckolib(Mob mob, String controllerName, String animationName)
+    {
+		if(ModList.get().isLoaded("geckolib"))
+		{
+			try
+			{
+				Field f = mob.getClass().getField(controllerName);
+				Field f1 = mob.getClass().getField(animationName);
+				Method m = f.getClass().getMethod("setAnimation", f1.getType());
+				f.setAccessible(true);
+				f1.setAccessible(true);
+				m.invoke(f.get(mob), f1.get(mob));
+			}
+			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+			{
+				
+			}
+			try
+			{
+				Field f = mob.getClass().getField(controllerName);
+				Field f1 = mob.getClass().getField(animationName);
+				Method m = f.getClass().getMethod("setAnimation", f1.getType());
+				f.setAccessible(true);
+				f1.setAccessible(true);
+				m.invoke(f.get(mob), RawAnimation.begin().thenLoop(animationName));
+			}
+			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+			{
+				
+			}
 		}
     }
     

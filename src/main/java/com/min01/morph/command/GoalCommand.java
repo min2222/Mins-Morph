@@ -71,14 +71,17 @@ public class GoalCommand
 			return sourceStack.hasPermission(2);
 		}).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes((commandCtx) ->
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "animationName"));
-		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).executes((commandCtx) ->
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), "", StringArgumentType.getString(commandCtx, "animationName"));
+		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("controllerName", StringArgumentType.string()).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes((commandCtx) ->
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "goalName"));
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "controllerName"), StringArgumentType.getString(commandCtx, "animationName"));
+		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).executes((commandCtx) ->
+		{
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), "", StringArgumentType.getString(commandCtx, "goalName"));
 		}))));
 	}
 	
-	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String animationName)
+	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String controllerName, String animationName)
 	{
 		for(ServerPlayer player : players)
 		{
@@ -108,6 +111,11 @@ public class GoalCommand
 							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
 							break;
 						}
+					}
+					if(!controllerName.isEmpty())
+					{
+						MorphUtil.setAnimationGeckolib(mob, controllerName, animationName);
+						sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName + " with geckolib animation " + animationName), true);
 					}
 				}
 				else
