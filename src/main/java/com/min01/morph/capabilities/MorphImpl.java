@@ -1,14 +1,7 @@
 package com.min01.morph.capabilities;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import com.google.common.collect.Lists;
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
-import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.UpdateMorphPacket;
 import com.min01.morph.util.MorphUtil;
@@ -20,7 +13,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.PacketDistributor;
@@ -139,33 +131,9 @@ public class MorphImpl implements IMorphCapability
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
-        		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
-        		List<String> list = new ArrayList<>();
-        		List<String> list1 = new ArrayList<>();
-        		List<WrappedGoal> goals = Lists.newArrayList(set);
-        		for(WrappedGoal goal : set)
-        		{
-        			((IWrappedGoal)goal).setEntity(mob);
-        			String goalName = goal.getGoal().getClass().getSimpleName();
-        			if(goal.getGoal().getClass().isAnonymousClass())
-        			{
-            			goalName = goal.getGoal().getClass().getSuperclass().getSimpleName();
-        			}
-        			if(list1.contains(goalName))
-        			{
-        				goalName = goalName + goals.indexOf(goal);
-        			}
-        			list1.add(goalName);
-        		}
-    			for(Field f : mob.getClass().getDeclaredFields())
-    			{
-    				if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
-    				{
-    					list.add(f.getName());
-    				}
-    			}
-    			data.saveGoal(mob.getClass().getSimpleName(), list1);
-    			data.saveAnimation(mob.getClass().getSimpleName(), list);
+    			data.saveGoal(mob.getClass().getSimpleName(), MorphUtil.getGoals(mob));
+    			data.saveAnimation(mob.getClass().getSimpleName(), MorphUtil.getAnimations(mob));
+    			data.saveData(mob.getClass().getSimpleName(), MorphUtil.getDatas(mob));
         	}
 			ForgeEventFactory.onFinalizeSpawn((Mob) mob, (ServerLevelAccessor) this.entity.level, this.entity.level.getCurrentDifficultyAt(this.entity.blockPosition()), MobSpawnType.COMMAND, null, null);
 		}

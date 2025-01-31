@@ -13,6 +13,7 @@ import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.util.MorphUtil;
 import com.min01.morph.util.world.MorphSavedData;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
@@ -64,6 +65,23 @@ public class GoalCommand
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
+	public static final SuggestionProvider<CommandSourceStack> DATAS = SuggestionProviders.register(new ResourceLocation("datas"), (p_258164_, p_258165_) -> 
+	{
+		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+		{
+			MorphSavedData data = MorphSavedData.get(player.level);
+        	if(data != null)
+        	{
+        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+        		if(cap.getMorph() != null)
+        		{
+            		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+        		}
+        	}
+		}
+		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
+	});
+	
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
 	{
 		dispatcher.register(Commands.literal("goal").requires((sourceStack) -> 
@@ -71,17 +89,17 @@ public class GoalCommand
 			return sourceStack.hasPermission(2);
 		}).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes((commandCtx) ->
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), "", StringArgumentType.getString(commandCtx, "animationName"));
-		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("controllerName", StringArgumentType.string()).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes((commandCtx) ->
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), "", StringArgumentType.getString(commandCtx, "animationName"), 0);
+		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).executes((commandCtx) ->
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "controllerName"), StringArgumentType.getString(commandCtx, "animationName"));
-		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).executes((commandCtx) ->
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), "", StringArgumentType.getString(commandCtx, "goalName"), 0);
+		}))).then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("dataName", StringArgumentType.string()).suggests(DATAS).then(Commands.argument("dataValue", IntegerArgumentType.integer(0)).executes((commandCtx) ->
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), "", StringArgumentType.getString(commandCtx, "goalName"));
-		}))));
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "dataName"), StringArgumentType.getString(commandCtx, "goalName"), IntegerArgumentType.getInteger(commandCtx, "dataValue"));
+		}))))));
 	}
 	
-	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String controllerName, String animationName)
+	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String dataName, String animationName, int dataValue)
 	{
 		for(ServerPlayer player : players)
 		{
@@ -107,15 +125,18 @@ public class GoalCommand
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
 							mob.setTarget(t.getFakeTarget());
 							MorphUtil.setAnimation(mob, animationName);
+							MorphUtil.setData(mob, dataName, dataValue);
 							goal.start();
-							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
+							if(dataName.isEmpty())
+							{
+								sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
+							}
+							else
+							{
+								sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName + ", and changed data of " + dataName + " to " + dataValue), true);
+							}
 							break;
 						}
-					}
-					if(!controllerName.isEmpty())
-					{
-						MorphUtil.setAnimationGeckolib(mob, controllerName, animationName);
-						sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName + " with geckolib animation " + animationName), true);
 					}
 				}
 				else

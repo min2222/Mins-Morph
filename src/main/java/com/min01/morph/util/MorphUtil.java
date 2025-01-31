@@ -3,26 +3,29 @@ package com.min01.morph.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.collect.Lists;
 import com.min01.morph.misc.IClientLevel;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
+import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.network.protocol.game.DebugPackets;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import software.bernie.geckolib.core.animation.RawAnimation;
 
 public class MorphUtil 
 {
@@ -46,38 +49,69 @@ public class MorphUtil
 		}
     }
     
-    public static void setAnimationGeckolib(Mob mob, String controllerName, String animationName)
+    @SuppressWarnings("unchecked")
+	public static <T> void setData(Mob mob, String dataName, int dataValue)
     {
-		if(ModList.get().isLoaded("geckolib"))
+		try
 		{
-			try
-			{
-				Field f = mob.getClass().getField(controllerName);
-				Field f1 = mob.getClass().getField(animationName);
-				Method m = f.getClass().getMethod("setAnimation", f1.getType());
-				f.setAccessible(true);
-				f1.setAccessible(true);
-				m.invoke(f.get(mob), f1.get(mob));
-			}
-			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
-			{
-				
-			}
-			try
-			{
-				Field f = mob.getClass().getField(controllerName);
-				Field f1 = mob.getClass().getField(animationName);
-				Method m = f.getClass().getMethod("setAnimation", f1.getType());
-				f.setAccessible(true);
-				f1.setAccessible(true);
-				m.invoke(f.get(mob), RawAnimation.begin().thenLoop(animationName));
-			}
-			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
-			{
-				
-			}
+			Field f = mob.getClass().getField(dataName);
+			f.setAccessible(true);
+			EntityDataAccessor<Integer> accessor = (EntityDataAccessor<Integer>) f.get(mob);
+	    	mob.getEntityData().set(accessor, dataValue);
+		}
+		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException e)
+		{
+			
 		}
     }
+    
+	public static List<String> getGoals(Mob mob)
+	{
+		List<String> list = new ArrayList<>();
+		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
+		List<WrappedGoal> goals = Lists.newArrayList(set);
+		for(WrappedGoal goal : set)
+		{
+			((IWrappedGoal)goal).setEntity(mob);
+			String goalName = goal.getGoal().getClass().getSimpleName();
+			if(goal.getGoal().getClass().isAnonymousClass())
+			{
+    			goalName = goal.getGoal().getClass().getSuperclass().getSimpleName();
+			}
+			if(list.contains(goalName))
+			{
+				goalName = goalName + goals.indexOf(goal);
+			}
+			list.add(goalName);
+		}
+		return list;
+	}
+	
+	public static List<String> getAnimations(Mob mob)
+	{
+		List<String> list = new ArrayList<>();
+		for(Field f : mob.getClass().getDeclaredFields())
+		{
+			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
+			{
+				list.add(f.getName());
+			}
+		}
+		return list;
+	}
+	
+	public static List<String> getDatas(Mob mob)
+	{
+		List<String> list = new ArrayList<>();
+		for(Field f : mob.getClass().getDeclaredFields())
+		{
+			if(f.getType().getSimpleName().equals("EntityDataAccessor") && !f.getType().isArray())
+			{
+				list.add(f.getName());
+			}
+		}
+		return list;
+	}
     
     public static void tick(LivingEntity player, LivingEntity morph)
     {

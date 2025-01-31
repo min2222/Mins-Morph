@@ -62,7 +62,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 			} 
 			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
 			{
-				e.printStackTrace();
+				
 			}
 		}
 	}
