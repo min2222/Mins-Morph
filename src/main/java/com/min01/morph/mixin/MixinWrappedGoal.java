@@ -59,7 +59,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 				Method m = this.mob.getClass().getMethod("getAnimationTick");
 				int animationTick = (int) m.invoke(this.mob);
 				cir.setReturnValue(animationTick > 0);
-			} 
+			}
 			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
 			{
 				

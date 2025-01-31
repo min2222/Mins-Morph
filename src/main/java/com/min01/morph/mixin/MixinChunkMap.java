@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.min01.morph.misc.ITrackedEntity;
+
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ChunkMap;
 import net.minecraft.server.level.ServerLevel;
@@ -21,19 +23,18 @@ public class MixinChunkMap
 	private ServerLevel level;
 	
 	@Inject(at = @At(value = "HEAD"), method = "broadcastAndSend", cancellable = true)
-	private void broadcastAndSend(Entity p_140334_, Packet<?> p_140335_, CallbackInfo ci)
+	private void broadcastAndSend(Entity entity, Packet<?> packet, CallbackInfo ci)
 	{
-		if(p_140334_.getId() < 0)
+		if(entity.getId() < 0)
 		{
-			ci.cancel();
-			EntityType<?> type = p_140334_.getType();
+			EntityType<?> type = entity.getType();
 			int i = type.clientTrackingRange() * 16;
 			if(i != 0)
 			{
 	            int j = type.updateInterval();
-	            ChunkMap.TrackedEntity chunkmap$trackedentity = ChunkMap.class.cast(this).new TrackedEntity(p_140334_, i, j, type.trackDeltas());
-	            chunkmap$trackedentity.updatePlayers(this.level.players());
-	            chunkmap$trackedentity.broadcastAndSend(p_140335_);
+	            ChunkMap.TrackedEntity chunkmap$trackedentity = ChunkMap.class.cast(this).new TrackedEntity(entity, i, j, type.trackDeltas());
+	            ((ITrackedEntity)chunkmap$trackedentity).updatePlayersCustom(this.level.players());
+	            chunkmap$trackedentity.broadcastAndSend(packet);
 			}
 		}
 	}

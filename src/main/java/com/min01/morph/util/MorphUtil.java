@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.collect.Lists;
-import com.min01.morph.misc.IClientLevel;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
 
@@ -32,7 +31,7 @@ public class MorphUtil
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
 	
 	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
-    
+	
     public static void setAnimation(Mob mob, String animationName)
     {
 		try
@@ -102,10 +101,9 @@ public class MorphUtil
 			try
 			{
 				ILevelEntityGetterAdapter adapter = (ILevelEntityGetterAdapter) m.invoke(player.level);
-				if(!adapter.byUuid().containsKey(morph.getUUID()))
-				{
-					adapter.byUuid().put(morph.getUUID(), morph);
-				}
+				adapter.byId().putIfAbsent(morph.getId(), morph);
+				adapter.byId().values().removeIf(t -> !t.isAlive());
+				adapter.byUuid().putIfAbsent(morph.getUUID(), morph);
 				adapter.byUuid().values().removeIf(t -> !t.isAlive());
 			}
 			catch (Exception e) 
@@ -117,15 +115,6 @@ public class MorphUtil
 	    		if(!player.level.isClientSide)
 	    		{
 	        		serverAiStep(mob);
-	    		}
-	    		else
-	    		{
-    				IClientLevel clientLevel = (IClientLevel) player.level;
-    				if(!clientLevel.byId().containsKey(morph.getId()))
-    				{
-    					clientLevel.byId().put(morph.getId(), morph);
-    				}
-    				clientLevel.byId().values().removeIf(t -> !t.isAlive());
 	    		}
 				if(mob.getTarget() != null)
 				{

@@ -39,7 +39,7 @@ public class ClientEventHandlerForge
             	if(event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type() && !player.getAbilities().instabuild && !player.isSpectator())
             	{
             		GuiGraphics guiGraphics = event.getGuiGraphics();
-            		Component component = Component.literal(player.getHealth() + " / " + player.getMaxHealth());
+            		Component component = Component.literal(living.getHealth() + " / " + living.getMaxHealth());
             		PoseStack poseStack = guiGraphics.pose();
             		event.setCanceled(true);
             		poseStack.pushPose();

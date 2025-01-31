@@ -234,15 +234,13 @@ public class MixinLivingEntity
     					cir.setReturnValue(false);
     				}
     			}
+    			boolean flag = morph.hurt(source, damage);
+    			if(!flag && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
+    			{
+    				cir.setReturnValue(false);
+    			}
     		}
 		});
-		if(MorphUtil.getMorphOwner(living) != null)
-		{
-			if(source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
-			{
-				cir.setReturnValue(true);
-			}
-		}
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "canBeAffected", cancellable = true)
