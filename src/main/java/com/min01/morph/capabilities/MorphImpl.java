@@ -1,19 +1,28 @@
 package com.min01.morph.capabilities;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import com.google.common.collect.Lists;
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
-import com.min01.morph.event.EventHandlerForge;
 import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.UpdateMorphPacket;
 import com.min01.morph.util.MorphUtil;
+import com.min01.morph.util.world.MorphSavedData;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -103,6 +112,10 @@ public class MorphImpl implements IMorphCapability
 	@Override
 	public void setMorph(LivingEntity morph) 
 	{
+		if(this.morph != null)
+		{
+			this.morph.discard();
+		}
 		this.morph = morph;
 		if(morph != null)
 		{
@@ -111,18 +124,50 @@ public class MorphImpl implements IMorphCapability
 	    		int number = this.entity.level.random.nextInt(1, 1000);
 	        	morph.setId(-number);
 			}
+			this.entity.setHealth(morph.getMaxHealth());
 			this.setType(morph.getType());
-			EventHandlerForge.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
-			EventHandlerForge.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
-			if(morph instanceof Mob mob)
-			{
-				for(WrappedGoal goal : mob.goalSelector.getAvailableGoals())
-				{
-	    			((IWrappedGoal)goal).setEntity(mob);
-				}
-			}
+			this.setup((Mob) morph);
+			MorphUtil.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
+			MorphUtil.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
 		}
 		this.sendUpdataPacket();
+	}
+	
+	public void setup(Mob mob)
+	{
+		if(!mob.level.isClientSide)
+		{
+			MorphSavedData data = MorphSavedData.get(mob.level);
+        	if(data != null)
+        	{
+        		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
+        		List<String> list = new ArrayList<>();
+        		List<WrappedGoal> goals = Lists.newArrayList(set);
+        		for(WrappedGoal goal : set)
+        		{
+        			((IWrappedGoal)goal).setEntity(mob);
+        			if(!goal.getGoal().getClass().isAnonymousClass())
+        			{
+            			String goalName = goal.getGoal().getClass().getSimpleName();
+            			data.saveGoal(goalName, goals.indexOf(goal));
+        			}
+        			else
+        			{
+            			String goalName = goal.getGoal().getClass().getSuperclass().getSimpleName();
+            			data.saveGoal(goalName, goals.indexOf(goal));
+        			}
+        		}
+    			for(Field f : mob.getClass().getDeclaredFields())
+    			{
+    				if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
+    				{
+    					list.add(f.getName());
+    				}
+    			}
+    			data.saveAnimation(mob.getClass().getSimpleName(), list);
+        	}
+			ForgeEventFactory.onFinalizeSpawn((Mob) mob, (ServerLevelAccessor) this.entity.level, this.entity.level.getCurrentDifficultyAt(this.entity.blockPosition()), MobSpawnType.COMMAND, null, null);
+		}
 	}
 
 	@Override

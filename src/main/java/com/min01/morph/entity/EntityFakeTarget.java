@@ -39,7 +39,7 @@ public class EntityFakeTarget extends AbstractOwnableMob<LivingEntity>
 		else
 		{
 			LivingEntity living = this.getOwner();
-			HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(living, entity -> !entity.isAlliedTo(living), 5.0F);
+			HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(living, entity -> !entity.isAlliedTo(living), 30.0F);
 			this.setPos(hitResult.getLocation());
 			living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
 			{

@@ -14,6 +14,7 @@ import com.min01.morph.capabilities.IMorphCapability;
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.util.MorphUtil;
 
+import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,6 +22,10 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 @Mixin(LivingEntity.class)
@@ -35,6 +40,101 @@ public class MixinLivingEntity
 		{
 			living.discard();
 		}
+	}
+	
+	@Inject(at = @At(value = "HEAD"), method = "getHealth", cancellable = true)
+	private void getHealth(CallbackInfoReturnable<Float> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		if(MorphUtil.getMorphOwner(living) != null)
+		{
+			cir.setReturnValue(((LivingEntity) MorphUtil.getMorphOwner(living)).getHealth());
+		}
+	}
+
+	@Inject(at = @At(value = "HEAD"), method = "getAttribute", cancellable = true)
+	private void getAttribute(Attribute attribute, CallbackInfoReturnable<AttributeInstance> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		{
+    		LivingEntity morph = t.getMorph();
+    		if(morph != null)
+    		{
+    			if(attribute != ForgeMod.BLOCK_REACH.get() && attribute != ForgeMod.ENTITY_REACH.get() && attribute != Attributes.ATTACK_SPEED && attribute != Attributes.MOVEMENT_SPEED && attribute != Attributes.LUCK)
+    			{
+        			cir.setReturnValue(morph.getAttribute(attribute));
+    			}
+    		}
+		});
+	}
+
+	@Inject(at = @At(value = "HEAD"), method = "getAttributeValue(Lnet/minecraft/core/Holder;)D", cancellable = true)
+	private void getAttributeValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		{
+    		LivingEntity morph = t.getMorph();
+    		if(morph != null)
+    		{
+    			if(holder.value() != ForgeMod.BLOCK_REACH.get() && holder.value() != ForgeMod.ENTITY_REACH.get() && holder.value() != Attributes.ATTACK_SPEED && holder.value() != Attributes.MOVEMENT_SPEED && holder.value() != Attributes.LUCK)
+    			{
+    	   			cir.setReturnValue(morph.getAttributeValue(holder));
+    			}
+    		}
+		});
+	}
+
+	@Inject(at = @At(value = "HEAD"), method = "getAttributeValue(Lnet/minecraft/world/entity/ai/attributes/Attribute;)D", cancellable = true)
+	private void getAttributeValue(Attribute attribute, CallbackInfoReturnable<Double> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		{
+    		LivingEntity morph = t.getMorph();
+    		if(morph != null)
+    		{
+    			if(attribute != ForgeMod.BLOCK_REACH.get() && attribute != ForgeMod.ENTITY_REACH.get() && attribute != Attributes.ATTACK_SPEED && attribute != Attributes.MOVEMENT_SPEED && attribute != Attributes.LUCK)
+    			{
+        			cir.setReturnValue(morph.getAttributeValue(attribute));	
+    			}
+    		}
+		});
+	}
+
+	@Inject(at = @At(value = "HEAD"), method = "getAttributeBaseValue(Lnet/minecraft/core/Holder;)D", cancellable = true)
+	private void getAttributeBaseValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		{
+    		LivingEntity morph = t.getMorph();
+    		if(morph != null)
+    		{
+    			if(holder.value() != ForgeMod.BLOCK_REACH.get() && holder.value() != ForgeMod.ENTITY_REACH.get() && holder.value() != Attributes.ATTACK_SPEED && holder.value() != Attributes.MOVEMENT_SPEED && holder.value() != Attributes.LUCK)
+    			{
+        			cir.setReturnValue(morph.getAttributeBaseValue(holder));
+    			}
+    		}
+		});
+	}
+
+	@Inject(at = @At(value = "HEAD"), method = "getAttributeBaseValue(Lnet/minecraft/world/entity/ai/attributes/Attribute;)D", cancellable = true)
+	private void getAttributeBaseValue(Attribute attribute, CallbackInfoReturnable<Double> cir) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		{
+    		LivingEntity morph = t.getMorph();
+    		if(morph != null)
+    		{
+    			if(attribute != ForgeMod.BLOCK_REACH.get() && attribute != ForgeMod.ENTITY_REACH.get() && attribute != Attributes.ATTACK_SPEED && attribute != Attributes.MOVEMENT_SPEED && attribute != Attributes.LUCK)
+    			{
+        			cir.setReturnValue(morph.getAttributeBaseValue(attribute));
+    			}
+    		}
+		});
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "isInvertedHealAndHarm", cancellable = true)

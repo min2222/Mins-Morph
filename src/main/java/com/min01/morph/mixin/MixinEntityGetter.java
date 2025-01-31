@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-import com.min01.morph.event.EventHandlerForge;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.world.entity.Entity;
@@ -25,9 +24,9 @@ public interface MixinEntityGetter extends EntityGetter
 		Class<?>[] ctx = manager.getContext();
 		for(Class<?> clazz : ctx)
 		{
-			if(EventHandlerForge.ENTITY_MAP.containsKey(clazz.hashCode()))
+			if(MorphUtil.ENTITY_MAP.containsKey(clazz.hashCode()))
 			{
-				Entity entity = EventHandlerForge.ENTITY_MAP.get(clazz.hashCode());
+				Entity entity = MorphUtil.ENTITY_MAP.get(clazz.hashCode());
 				if(entity != null)
 				{
 					if(MorphUtil.getMorphOwner(entity) != null)
@@ -36,9 +35,9 @@ public interface MixinEntityGetter extends EntityGetter
 					}
 				}
 			}
-			else if(EventHandlerForge.ENTITY_MAP2.containsKey(clazz.hashCode()))
+			else if(MorphUtil.ENTITY_MAP2.containsKey(clazz.hashCode()))
 			{
-				Entity entity = EventHandlerForge.ENTITY_MAP2.get(clazz.hashCode());
+				Entity entity = MorphUtil.ENTITY_MAP2.get(clazz.hashCode());
 				if(entity != null)
 				{
 					if(MorphUtil.getMorphOwner(entity) != null)
@@ -59,9 +58,9 @@ public interface MixinEntityGetter extends EntityGetter
 		Class<?>[] ctx = manager.getContext();
 		for(Class<?> clazz : ctx)
 		{
-			if(EventHandlerForge.ENTITY_MAP.containsKey(clazz.hashCode()))
+			if(MorphUtil.ENTITY_MAP.containsKey(clazz.hashCode()))
 			{
-				Entity entity = EventHandlerForge.ENTITY_MAP.get(clazz.hashCode());
+				Entity entity = MorphUtil.ENTITY_MAP.get(clazz.hashCode());
 				if(entity != null)
 				{
 					if(MorphUtil.getMorphOwner(entity) != null)
@@ -70,9 +69,9 @@ public interface MixinEntityGetter extends EntityGetter
 					}
 				}
 			}
-			else if(EventHandlerForge.ENTITY_MAP2.containsKey(clazz.hashCode()))
+			else if(MorphUtil.ENTITY_MAP2.containsKey(clazz.hashCode()))
 			{
-				Entity entity = EventHandlerForge.ENTITY_MAP2.get(clazz.hashCode());
+				Entity entity = MorphUtil.ENTITY_MAP2.get(clazz.hashCode());
 				if(entity != null)
 				{
 					if(MorphUtil.getMorphOwner(entity) != null)

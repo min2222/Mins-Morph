@@ -24,9 +24,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class MorphCommand 
@@ -63,15 +60,10 @@ public class MorphCommand
 			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
 			{
 				Entity entity = entityType.get().create(player.level);
-				if(t.getMorph() != null)
-				{
-					t.getMorph().discard();
-				}
 				if(entity instanceof LivingEntity living)
 				{
 					t.setPersistent(isPersistent);
 					t.setMorph(living);
-					ForgeEventFactory.onFinalizeSpawn((Mob) living, sourceStack.getLevel(), sourceStack.getLevel().getCurrentDifficultyAt(player.blockPosition()), MobSpawnType.COMMAND, null, null);
 					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + player.getDisplayName().getString() + " to " + living.getDisplayName().getString()), true);
 				}
 				else

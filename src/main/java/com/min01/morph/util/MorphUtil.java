@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -25,25 +25,14 @@ import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public class MorphUtil 
 {
-	public static List<String> getAnimations(Goal goal)
-	{
-		List<String> list = new ArrayList<>();
-		getFieldsInsideClass(goal.getClass(), fin ->
-		{
-            if(fin.desc.contains("Animation"))
-            {
-	            list.add(fin.name);
-            }
-		});
-		return list;
-	}
+	public static final Map<Integer, Entity> ENTITY_MAP = new HashMap<>();
+	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
     
     public static void setAnimation(Mob mob, String animationName)
     {
@@ -52,14 +41,10 @@ public class MorphUtil
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
-        		String name = data.getAnimation(animationName);
-        		if(!name.isEmpty())
-        		{
-        			Field f = mob.getClass().getField(name);
-        			Method m = mob.getClass().getMethod("setAnimation", f.getType());
-        			f.setAccessible(true);
-        			m.invoke(mob, f.get(mob));
-        		}
+    			Field f = mob.getClass().getField(animationName);
+    			Method m = mob.getClass().getMethod("setAnimation", f.getType());
+    			f.setAccessible(true);
+    			m.invoke(mob, f.get(mob));
         	}
 		}
 		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
@@ -232,8 +217,7 @@ public class MorphUtil
         morph.setOnGround(player.onGround());
         morph.setSwimming(player.isSwimming());
         morph.setSprinting(player.isSprinting());
-
-        morph.setHealth(morph.getMaxHealth() * (player.getHealth() / player.getMaxHealth()));
+        
         morph.hurtTime = player.hurtTime;
         morph.deathTime = player.deathTime;
         morph.fallDistance = player.fallDistance;
@@ -269,7 +253,7 @@ public class MorphUtil
         mob.getNavigation().tick();
         mob.level.getProfiler().pop();
         mob.level.getProfiler().push("mob tick");
-        invokeCustomServerAiStep(mob);
+        customServerAiStep(mob);
         mob.level.getProfiler().pop();
         mob.level.getProfiler().push("controls");
         mob.level.getProfiler().push("move");
@@ -283,7 +267,7 @@ public class MorphUtil
         DebugPackets.sendGoalSelector(mob.level, mob, mob.goalSelector);
     }
     
-    public static void invokeCustomServerAiStep(Mob mob)
+    public static void customServerAiStep(Mob mob)
     {
 		Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_8024_");
 		try 
