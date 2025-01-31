@@ -36,7 +36,7 @@ public class ClientEventHandlerForge
     		LivingEntity living = t.getMorph();
     		if(living != null)
     		{
-            	if(event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type())
+            	if(event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type() && !player.getAbilities().instabuild && !player.isSpectator())
             	{
             		GuiGraphics guiGraphics = event.getGuiGraphics();
             		Component component = Component.literal(player.getHealth() + " / " + player.getMaxHealth());

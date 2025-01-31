@@ -3,6 +3,7 @@ package com.min01.morph.command;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
@@ -43,7 +44,7 @@ public class GoalCommand
         		}
         	}
 		}
-		return null;
+		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
 	public static final SuggestionProvider<CommandSourceStack> ANIMATIONS = SuggestionProviders.register(new ResourceLocation("animations"), (p_258164_, p_258165_) -> 
@@ -60,7 +61,7 @@ public class GoalCommand
         		}
         	}
 		}
-		return null;
+		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
