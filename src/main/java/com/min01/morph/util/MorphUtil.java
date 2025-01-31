@@ -79,6 +79,13 @@ public class MorphUtil
 				list.add(f.getName());
 			}
 		}
+		for(Field f : mob.getClass().getSuperclass().getDeclaredFields())
+		{
+			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
+			{
+				list.add(f.getName());
+			}
+		}
 		return list;
 	}
     
