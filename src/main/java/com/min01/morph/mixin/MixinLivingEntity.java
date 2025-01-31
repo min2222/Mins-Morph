@@ -59,7 +59,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(MorphUtil.ATTRIBUTES.contains(attribute))
+    			if(MorphUtil.ATTRIBUTES.contains(attribute.getDescriptionId()))
     			{
         			cir.setReturnValue(morph.getAttribute(attribute));
     			}
@@ -76,7 +76,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
+    			if(MorphUtil.ATTRIBUTES.contains(holder.value().getDescriptionId()))
     			{
     	   			cir.setReturnValue(morph.getAttributeValue(holder));
     			}
@@ -93,7 +93,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(MorphUtil.ATTRIBUTES.contains(attribute))
+    			if(MorphUtil.ATTRIBUTES.contains(attribute.getDescriptionId()))
     			{
         			cir.setReturnValue(morph.getAttributeValue(attribute));	
     			}
@@ -110,7 +110,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
+    			if(MorphUtil.ATTRIBUTES.contains(holder.value().getDescriptionId()))
     			{
         			cir.setReturnValue(morph.getAttributeBaseValue(holder));
     			}
@@ -127,7 +127,7 @@ public class MixinLivingEntity
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
     		{
-    			if(MorphUtil.ATTRIBUTES.contains(attribute))
+    			if(MorphUtil.ATTRIBUTES.contains(attribute.getDescriptionId()))
     			{
         			cir.setReturnValue(morph.getAttributeBaseValue(attribute));
     			}
