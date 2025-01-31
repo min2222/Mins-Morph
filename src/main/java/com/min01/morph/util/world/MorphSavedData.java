@@ -18,7 +18,7 @@ public class MorphSavedData extends SavedData
 	public static final String NAME = "morph_data";
 	
 	private Map<String, List<String>> animationMap = new HashMap<>();
-	private Map<String, Integer> goalMap = new HashMap<>();
+	private Map<String, List<String>> goalMap = new HashMap<>();
 	
     public static MorphSavedData get(Level level)
     {
@@ -34,8 +34,8 @@ public class MorphSavedData extends SavedData
     public static MorphSavedData load(CompoundTag nbt) 
     {
     	MorphSavedData data = new MorphSavedData();
-		ListTag list = nbt.getList("Mobs", 10);
-		ListTag list1 = nbt.getList("Mobs", 10);
+		ListTag list = nbt.getList("MobAnimations", 10);
+		ListTag list1 = nbt.getList("MobGoals", 10);
 		for(int i = 0; i < list.size(); ++i)
 		{
 			CompoundTag tag = list.getCompound(i);
@@ -52,9 +52,15 @@ public class MorphSavedData extends SavedData
 		for(int i = 0; i < list1.size(); ++i)
 		{
 			CompoundTag tag = list1.getCompound(i);
-			String goalName = tag.getString("GoalName");
-			int index = tag.getInt("GoalIndex");
-			data.saveGoal(goalName, index);
+			String mobName = tag.getString("Mob");
+			ListTag list4 = tag.getList("Goals", 10);
+			List<String> list5 = new ArrayList<>();
+			for(int i1 = 0; i1 < list4.size(); ++i1)
+			{
+				CompoundTag tag1 = list4.getCompound(i1);
+				list5.add(tag1.getString("Goal"));
+			}
+			data.saveGoal(mobName, list5);
 		}
         return data;
     }
@@ -80,31 +86,28 @@ public class MorphSavedData extends SavedData
 			tag.put("Animations", list2);
 			list.add(tag);
 		}
-		for(Entry<String, Integer> entry : this.goalMap.entrySet())
+		for(Entry<String, List<String>> entry : this.goalMap.entrySet())
 		{
-			String goalName = entry.getKey();
-			int index = entry.getValue();
+			String mobName = entry.getKey();
+			List<String> names = entry.getValue();
+			ListTag list2 = new ListTag();
 			CompoundTag tag = new CompoundTag();
-			tag.putString("GoalName", goalName);
-			tag.putInt("GoalIndex", index);
+			names.forEach(t ->
+			{
+				CompoundTag tag1 = new CompoundTag();
+				tag1.putString("Goal", t);
+				list2.add(tag1);
+			});
+			tag.putString("Mob", mobName);
+			tag.put("Goals", list2);
 			list1.add(tag);
 		}
-		nbt.put("Mobs", list);
-		nbt.put("Goals", list1);
+		nbt.put("MobAnimations", list);
+		nbt.put("MobGoals", list1);
 		return nbt;
 	}
 	
-	public Map<String, Integer> getGoalMap()
-	{
-		return this.goalMap;
-	}
-	
-	public Map<String, List<String>> getAnimationMap()
-	{
-		return this.animationMap;
-	}
-	
-	public Integer getGoalIndex(String goalName)
+	public List<String> getGoals(String goalName)
 	{
 		return this.goalMap.get(goalName);
 	}
@@ -120,9 +123,9 @@ public class MorphSavedData extends SavedData
 		this.setDirty();
 	}
 	
-	public void saveGoal(String goalName, Integer goalIndex)
+	public void saveGoal(String mobName, List<String> goals)
 	{
-		this.goalMap.put(goalName, goalIndex);
+		this.goalMap.put(mobName, goals);
 		this.setDirty();
 	}
 }

@@ -36,10 +36,11 @@ public class GoalCommand
 			MorphSavedData data = MorphSavedData.get(player.level);
         	if(data != null)
         	{
-        		return SharedSuggestionProvider.suggest(data.getGoalMap().keySet().stream().filter(t -> 
+        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+        		if(cap.getMorph() != null)
         		{
-        			return !t.contains("$");
-        		}), p_258165_);
+            		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+        		}
         	}
 		}
 		return null;
@@ -55,10 +56,7 @@ public class GoalCommand
         		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
         		if(cap.getMorph() != null)
         		{
-            		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()).stream().filter(t -> 
-            		{
-            			return !t.contains("$");
-            		}), p_258165_);
+            		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
         		}
         	}
 		}
@@ -79,13 +77,7 @@ public class GoalCommand
 		}))));
 	}
 	
-	/*.then(Commands.argument("players", EntityArgument.players()).then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("goalIndex", IntegerArgumentType.integer(0))).executes((commandCtx) ->
-	{
-		return triggerGoalWithIndex(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), IntegerArgumentType.getInteger(commandCtx, "goalIndex"));
-	}))*/
-	
-	@SuppressWarnings("unused")
-	private static int triggerGoalWithIndex(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, int goalIndex)
+	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String animationName)
 	{
 		for(ServerPlayer player : players)
 		{
@@ -96,53 +88,11 @@ public class GoalCommand
 					Mob mob = (Mob) t.getMorph();
 					Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
 					List<WrappedGoal> list = Lists.newArrayList(set);
-					if(set.size() > goalIndex)
+					for(WrappedGoal goal : set)
 					{
-						WrappedGoal goal = list.get(goalIndex);
-						if(goal.getGoal().getClass().getSimpleName().equals(goalName))
-						{
-							((IWrappedGoal) goal).setCanUse();
-							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
-							mob.setTarget(t.getFakeTarget());
-							goal.start();
-							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goal.getGoal().getClass().getSimpleName() + " in Index " + goalIndex), true);
-						}
-						else
-						{
-							sourceStack.sendFailure(Component.literal("Index at" + goalIndex + " is not a " + goalName + "!"));
-						}
-					}
-					else
-					{
-						sourceStack.sendFailure(Component.literal("Index is too large!"));
-					}
-				}
-				else
-				{
-					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
-				}
-			});
-		}
-		return players.size();
-	}
-	
-	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String animationName)
-	{
-		for(ServerPlayer player : players)
-		{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
-			{
-				if(t.getMorph() != null)
-				{
-					Mob mob = (Mob) t.getMorph();
-					for(WrappedGoal goal : mob.goalSelector.getAvailableGoals())
-					{
-						String name = goal.getGoal().getClass().getSimpleName();
-						if(goal.getGoal().getClass().isAnonymousClass())
-						{
-							name = goal.getGoal().getClass().getSuperclass().getSimpleName();
-						}
-						if(name.equals(goalName))
+						int index = list.indexOf(goal);
+						char lastChar = goalName.charAt(goalName.length() - 1);
+						if(index == Character.getNumericValue(lastChar))
 						{
 							((IWrappedGoal) goal).setCanUse();
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());

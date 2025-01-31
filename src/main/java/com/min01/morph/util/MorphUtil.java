@@ -1,25 +1,14 @@
 package com.min01.morph.util;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import com.min01.morph.misc.IClientLevel;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
-import com.min01.morph.util.world.MorphSavedData;
 
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
@@ -38,82 +27,15 @@ public class MorphUtil
     {
 		try
 		{
-			MorphSavedData data = MorphSavedData.get(mob.level);
-        	if(data != null)
-        	{
-    			Field f = mob.getClass().getField(animationName);
-    			Method m = mob.getClass().getMethod("setAnimation", f.getType());
-    			f.setAccessible(true);
-    			m.invoke(mob, f.get(mob));
-        	}
+			Field f = mob.getClass().getField(animationName);
+			Method m = mob.getClass().getMethod("setAnimation", f.getType());
+			f.setAccessible(true);
+			m.invoke(mob, f.get(mob));
 		}
 		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
 		{
 			
 		}
-    }
-    
-	public static void getMethodsInsideClass(Class<?> clazz, Consumer<MethodInsnNode> consumer)
-	{
-        try
-        {
-    		ClassNode classNode = MorphUtil.getClassNode(clazz);
-    		for(MethodNode method : classNode.methods)
-    		{
-    		    for(AbstractInsnNode ain : method.instructions.toArray())
-    		    {
-    		        if(ain.getType() == AbstractInsnNode.METHOD_INSN) 
-    		        {
-    		        	MethodInsnNode min = (MethodInsnNode) ain;
-    		            consumer.accept(min);
-    		        }
-    		    }
-    		}
-        }
-        catch (IOException | SecurityException e) 
-        {
-        	
-		}
-	}
-	
-	public static void getFieldsInsideClass(Class<?> clazz, Consumer<FieldInsnNode> consumer)
-	{
-        try
-        {
-    		ClassNode classNode = MorphUtil.getClassNode(clazz);
-    		for(MethodNode method : classNode.methods)
-    		{
-    		    for(AbstractInsnNode ain : method.instructions.toArray())
-    		    {
-    		        if(ain.getType() == AbstractInsnNode.FIELD_INSN) 
-    		        {
-    		            FieldInsnNode fin = (FieldInsnNode) ain;
-    		            consumer.accept(fin);
-    		        }
-    		    }
-    		}
-        }
-        catch (IOException | SecurityException e) 
-        {
-        	
-		}
-	}
-	
-	//ChatGPT ahhh;
-    public static ClassNode getClassNode(Class<?> clazz) throws IOException
-    {
-        String className = clazz.getName().replace('.', '/') + ".class";
-        try(InputStream classStream = clazz.getClassLoader().getResourceAsStream(className))
-        {
-            if(classStream == null)
-            {
-                throw new IOException("Class not found: " + clazz.getName());
-            }
-            ClassReader classReader = new ClassReader(classStream);
-            ClassNode classNode = new ClassNode();
-            classReader.accept(classNode, 0);
-            return classNode;
-        }
     }
     
     public static void tick(LivingEntity player, LivingEntity morph)

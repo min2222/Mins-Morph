@@ -142,20 +142,17 @@ public class MorphImpl implements IMorphCapability
         	{
         		Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
         		List<String> list = new ArrayList<>();
+        		List<String> list1 = new ArrayList<>();
         		List<WrappedGoal> goals = Lists.newArrayList(set);
         		for(WrappedGoal goal : set)
         		{
         			((IWrappedGoal)goal).setEntity(mob);
-        			if(!goal.getGoal().getClass().isAnonymousClass())
+        			String goalName = goal.getGoal().getClass().getSimpleName();
+        			if(goal.getGoal().getClass().isAnonymousClass())
         			{
-            			String goalName = goal.getGoal().getClass().getSimpleName();
-            			data.saveGoal(goalName, goals.indexOf(goal));
+            			goalName = goal.getGoal().getClass().getSuperclass().getSimpleName();
         			}
-        			else
-        			{
-            			String goalName = goal.getGoal().getClass().getSuperclass().getSimpleName();
-            			data.saveGoal(goalName, goals.indexOf(goal));
-        			}
+        			list1.add(goalName + goals.indexOf(goal));
         		}
     			for(Field f : mob.getClass().getDeclaredFields())
     			{
@@ -164,6 +161,7 @@ public class MorphImpl implements IMorphCapability
     					list.add(f.getName());
     				}
     			}
+    			data.saveGoal(mob.getClass().getSimpleName(), list1);
     			data.saveAnimation(mob.getClass().getSimpleName(), list);
         	}
 			ForgeEventFactory.onFinalizeSpawn((Mob) mob, (ServerLevelAccessor) this.entity.level, this.entity.level.getCurrentDifficultyAt(this.entity.blockPosition()), MobSpawnType.COMMAND, null, null);
