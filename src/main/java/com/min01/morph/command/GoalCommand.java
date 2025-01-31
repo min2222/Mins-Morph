@@ -24,8 +24,12 @@ import net.minecraft.commands.synchronization.SuggestionProviders;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 public class GoalCommand 
@@ -93,16 +97,20 @@ public class GoalCommand
 					{
 						int index = list.indexOf(goal);
 						char lastChar = goalName.charAt(goalName.length() - 1);
-	        			String name = goal.getGoal().getClass().getSimpleName();
-	        			if(goal.getGoal().getClass().isAnonymousClass())
-	        			{
-	        				name = goal.getGoal().getClass().getSuperclass().getSimpleName();
-	        			}
+						String name = MorphUtil.getGoalName(goal.getGoal());
 						if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
 						{
 							((IWrappedGoal) goal).setCanUse();
 							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
-							mob.setTarget(t.getFakeTarget());
+							HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(player, entity -> !entity.isAlliedTo(player), 30.0F);
+							if(hitResult instanceof EntityHitResult entityHit)
+							{
+								if(entityHit.getEntity() instanceof LivingEntity living)
+								{
+									((IWrappedGoal) goal).setTarget(living);
+									mob.setTarget(living);
+								}
+							}
 							MorphUtil.setAnimation(mob, animationName);
 							goal.start();
 							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);

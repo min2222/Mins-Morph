@@ -6,8 +6,10 @@ import net.minecraft.world.entity.Mob;
 public interface IWrappedGoal
 {
 	public void setEntity(Mob mob);
-	
+
 	public void setFakeTarget(LivingEntity target);
+	
+	public void setTarget(LivingEntity target);
 	
 	public void setCanUse();
 }

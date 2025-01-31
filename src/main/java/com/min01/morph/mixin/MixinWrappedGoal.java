@@ -28,6 +28,9 @@ public class MixinWrappedGoal implements IWrappedGoal
 	private LivingEntity target;
 	
 	@Unique
+	private LivingEntity fakeTarget;
+	
+	@Unique
 	private boolean canUse;
 	
 	@Shadow
@@ -74,7 +77,18 @@ public class MixinWrappedGoal implements IWrappedGoal
 		{
 			if(this.target != null)
 			{
-				this.mob.setTarget(this.target);
+				if(this.target.isAlive())
+				{
+					this.mob.setTarget(this.target);
+				}
+				else
+				{
+					this.target = null;
+				}
+			}
+			else if(this.fakeTarget != null)
+			{
+				this.mob.setTarget(this.fakeTarget);
 			}
 		}
 	}
@@ -87,6 +101,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 			this.mob.setTarget(null);
 			this.canUse = false;
 			this.target = null;
+			this.fakeTarget = null;
 		}
 	}
 	
@@ -97,7 +112,13 @@ public class MixinWrappedGoal implements IWrappedGoal
 	}
 	
 	@Override
-	public void setFakeTarget(LivingEntity target)
+	public void setFakeTarget(LivingEntity target) 
+	{
+		this.fakeTarget = target;
+	}
+	
+	@Override
+	public void setTarget(LivingEntity target)
 	{
 		this.target = target;
 	}
