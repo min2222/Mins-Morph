@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.util.TriConsumer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,7 +31,6 @@ import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.network.protocol.game.DebugPackets;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -40,6 +40,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -175,28 +176,39 @@ public class MorphUtil
         	
 		}
 	}
-	
-	public static void getLoadConstants(Class<?> clazz, BiConsumer<String, LdcInsnNode> consumer)
+
+	//ChatGPT ahhh;
+	public static void getLoadConstants(Class<?> clazz, TriConsumer<String, LdcInsnNode, MethodInsnNode> consumer) 
 	{
-        try
-        {
-    		ClassNode classNode = getClassNode(clazz);
-    		for(MethodNode method : classNode.methods)
-    		{
-    		    for(AbstractInsnNode ain : method.instructions.toArray())
-    		    {
-    		        if(ain.getType() == AbstractInsnNode.LDC_INSN) 
-    		        {
-    		        	LdcInsnNode lin = (LdcInsnNode) ain;
-    		            consumer.accept(method.name, lin);
-    		        }
-    		    }
-    		}
-        }
-        catch (IOException | SecurityException e) 
-        {
-        	
-		}
+	    try
+	    {
+	        ClassNode classNode = getClassNode(clazz);
+	        for(MethodNode method : classNode.methods) 
+	        {
+	            AbstractInsnNode[] instructions = method.instructions.toArray();
+	            for(int i = 0; i < instructions.length - 2; i++) 
+	            {
+	                if(instructions[i].getType() == AbstractInsnNode.LDC_INSN && instructions[i + 1].getType() == AbstractInsnNode.LDC_INSN && instructions[i + 2].getType() == AbstractInsnNode.METHOD_INSN) 
+	                {
+	                    LdcInsnNode keyNode = (LdcInsnNode) instructions[i];
+	                    LdcInsnNode valueNode = (LdcInsnNode) instructions[i + 1];
+	                    MethodInsnNode methodNode = (MethodInsnNode) instructions[i + 2];
+
+	                    if(keyNode.cst instanceof String string)
+	                    {
+	                    	if(!string.isBlank())
+	                    	{
+		                        consumer.accept(string, valueNode, methodNode);
+	                    	}
+	                    }
+	                }
+	            }
+	        }
+	    } 
+	    catch (IOException | SecurityException e) 
+	    {
+	    	
+	    }
 	}
 	
 	//ChatGPT ahhh;
@@ -239,29 +251,36 @@ public class MorphUtil
 		{
 			
 		}
+		
+		try
+		{
+			if(!animationName.isEmpty())
+			{
+				Method m = mob.getClass().getMethod("setAnimation", String.class);
+				m.invoke(mob, animationName);
+			}
+		}
+		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | InvocationTargetException e)
+		{
+			
+		}
     }
 	
-	@SuppressWarnings("unchecked")
-	public static void setAnimation(Mob mob, String animationName, int actionState)
+	public static void triggerProcedure(Mob mob, String procedureName)
 	{
 		try
 		{
-			Field f = mob.getClass().getField("DATA_currentAnimation");
-			Field f1 = mob.getClass().getField("DATA_actionState");
-			f.setAccessible(true);
-			f1.setAccessible(true);
-			EntityDataAccessor<String> accessor = (EntityDataAccessor<String>) f.get(mob);
-			EntityDataAccessor<Integer> accessor2 = (EntityDataAccessor<Integer>) f1.get(mob);
-			mob.getEntityData().set(accessor, animationName);
-			mob.getEntityData().set(accessor2, 1);
+			Class<?> clazz = Class.forName(procedureName);
+			Method m = clazz.getMethod("execute", LevelAccessor.class, double.class, double.class, double.class, Entity.class);
+			m.invoke(null, mob.level, mob.getX(), mob.getY(), mob.getZ(), mob);
 		}
-		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException e)
+		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | InvocationTargetException | ClassNotFoundException e)
 		{
 			
 		}
 	}
 	
-	public static List<String> getTagNames(Class<?> clazz, List<String> list)
+	public static void getTags(Class<?> clazz, BiConsumer<String, String> consumer)
 	{
 		getMethodCalls(clazz, t -> 
 		{
@@ -270,17 +289,41 @@ public class MorphUtil
 				try
 				{
 					Class<?> clazz1 = Class.forName(t.owner.replace('/', '.'));
-					getTagNames(clazz1, list);
-					getLoadConstants(clazz1, (t1, t2) -> 
+					if(clazz != clazz1)
 					{
-						if(t2.cst instanceof String string)
+						getTags(clazz1, consumer);
+					}
+					getLoadConstants(clazz1, (string, value, method) -> 
+					{
+						if(method.name.contains("put") || method.name.contains("get"))
 						{
-							if(!string.isEmpty() && !string.contains(".") && !string.contains(":") && !list.contains(string))
-							{
-								list.add(string);
-							}
+							consumer.accept(string, value.cst.toString());
 						}
 					});
+				}
+				catch (ClassNotFoundException e) 
+				{
+					
+				}
+			}
+		});
+	}
+	
+	public static List<String> getProcedures(Class<?> clazz, List<String> list)
+	{
+		getMethodCalls(clazz, t -> 
+		{
+			if(t.name.contains("execute") && t.owner.contains("Procedure"))
+			{
+				try
+				{
+					String name = t.owner.replace('/', '.');
+					Class<?> clazz1 = Class.forName(name);
+					if(clazz != clazz1)
+					{
+						getProcedures(clazz1, list);
+					}
+					list.add(name);
 				}
 				catch (ClassNotFoundException e) 
 				{
@@ -359,7 +402,7 @@ public class MorphUtil
 			}
 			catch (Exception e) 
 			{
-				e.printStackTrace();
+				
 			}
 	    	if(morph instanceof Mob mob)
 	    	{
