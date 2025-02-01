@@ -6,13 +6,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.util.MorphUtil;
 
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
 
 @Mixin(Mob.class)
 public class MixinMob 
@@ -23,6 +26,15 @@ public class MixinMob
 		if(Mob.class.cast(this).getId() < 0)
 		{
 			ci.cancel();
+		}
+	}
+	
+	@Inject(at = @At(value = "HEAD"), method = "getItemBySlot", cancellable = true)
+	private void getItemBySlot(EquipmentSlot slot, CallbackInfoReturnable<ItemStack> cir)
+	{
+		if(MorphUtil.getMorphOwner(Mob.class.cast(this)) != null)
+		{
+			cir.setReturnValue(((LivingEntity) MorphUtil.getMorphOwner(Mob.class.cast(this))).getItemBySlot(slot));
 		}
 	}
 	

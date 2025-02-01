@@ -13,6 +13,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.PacketDistributor;
@@ -61,6 +62,14 @@ public class MorphImpl implements IMorphCapability
 		{
 			MorphUtil.tick(this.entity, this.morph);
 			this.morph.tick();
+			if(this.entity instanceof Player player)
+			{
+				if(!player.getAbilities().instabuild)
+				{
+					player.getAbilities().mayfly = this.morph.isNoGravity();
+					player.onUpdateAbilities();
+				}
+			}
 			if(!this.entity.level.isClientSide)
 			{
 				boolean flag = this.target != null && !this.target.isAlive();
