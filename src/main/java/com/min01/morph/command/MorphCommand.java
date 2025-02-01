@@ -15,6 +15,8 @@ import com.min01.morph.util.MorphUtil;
 import com.min01.morph.util.world.MorphSavedData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 
@@ -36,14 +38,28 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 public class MorphCommand 
 {
+	public static final SuggestionProvider<CommandSourceStack> TAGS = SuggestionProviders.register(new ResourceLocation("tags"), (p_258164_, p_258165_) -> 
+	{
+		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+		{
+			MorphSavedData data = MorphSavedData.get(player.level);
+        	if(data != null)
+        	{
+        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+        		if(cap.getMorph() != null)
+        		{
+            		return SharedSuggestionProvider.suggest(data.getTags(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+        		}
+        	}
+		}
+		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
+	});
+	
 	public static final SuggestionProvider<CommandSourceStack> GOALS = SuggestionProviders.register(new ResourceLocation("goals"), (p_258164_, p_258165_) -> 
 	{
 		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
@@ -106,6 +122,15 @@ public class MorphCommand
 		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("trigger").then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes(commandCtx -> 
 		{
 			return triggerGoalWithAnimation(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "animationName"));
+		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("state").then(Commands.argument("animationName", StringArgumentType.string()).suggests(TAGS).then(Commands.argument("actionState", IntegerArgumentType.integer()).executes(commandCtx -> 
+		{
+			return trigger(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "animationName"), IntegerArgumentType.getInteger(commandCtx, "actionState"));
+		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("tag").then(Commands.argument("tagName", StringArgumentType.string()).suggests(TAGS).then(Commands.argument("valueName", StringArgumentType.string()).suggests(TAGS).executes(commandCtx -> 
+		{
+			return trigger(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "tagName"), StringArgumentType.getString(commandCtx, "valueName"));
+		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("tag").then(Commands.argument("tagName", StringArgumentType.string()).suggests(TAGS).then(Commands.argument("value", DoubleArgumentType.doubleArg()).executes(commandCtx -> 
+		{
+			return trigger(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "tagName"), DoubleArgumentType.getDouble(commandCtx, "value"));
 		}))))));
 	}
 	
@@ -128,16 +153,7 @@ public class MorphCommand
 						if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
 						{
 							((IWrappedGoal) goal).setCanUse();
-							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
-							HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(player, entity -> !entity.isAlliedTo(player), 30.0F);
-							if(hitResult instanceof EntityHitResult entityHit)
-							{
-								if(entityHit.getEntity() instanceof LivingEntity living)
-								{
-									((IWrappedGoal) goal).setTarget(living);
-									mob.setTarget(living);
-								}
-							}
+							MorphUtil.setTarget(player, mob, goal, t.getFakeTarget());
 							goal.start();
 							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
 							break;
@@ -172,22 +188,79 @@ public class MorphCommand
 						if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
 						{
 							((IWrappedGoal) goal).setCanUse();
-							((IWrappedGoal) goal).setFakeTarget(t.getFakeTarget());
-							HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(player, entity -> !entity.isAlliedTo(player), 30.0F);
-							if(hitResult instanceof EntityHitResult entityHit)
-							{
-								if(entityHit.getEntity() instanceof LivingEntity living)
-								{
-									((IWrappedGoal) goal).setTarget(living);
-									mob.setTarget(living);
-								}
-							}
+							MorphUtil.setTarget(player, mob, goal, t.getFakeTarget());
 							MorphUtil.setAnimation(mob, animationName);
 							goal.start();
 							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName + " with animation " + animationName), true);
 							break;
 						}
 					}
+				}
+				else
+				{
+					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+				}
+			});
+		}
+		return players.size();
+	}
+	
+	private static int trigger(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String tagName, double tagValue)
+	{
+		for(ServerPlayer player : players)
+		{
+			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			{
+				if(t.getMorph() != null)
+				{
+					Mob mob = (Mob) t.getMorph();
+					MorphUtil.setTarget(player, mob, t.getFakeTarget());
+					mob.getPersistentData().putDouble(tagName, tagValue);
+					sourceStack.sendSuccess(() -> Component.literal("Set tag " + tagName + " to " + tagValue), true);
+				}
+				else
+				{
+					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+				}
+			});
+		}
+		return players.size();
+	}
+	
+	private static int trigger(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String tagName, String tagValue)
+	{
+		for(ServerPlayer player : players)
+		{
+			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			{
+				if(t.getMorph() != null)
+				{
+					Mob mob = (Mob) t.getMorph();
+					MorphUtil.setTarget(player, mob, t.getFakeTarget());
+					mob.getPersistentData().putString(tagName, tagValue);
+					sourceStack.sendSuccess(() -> Component.literal("Set tag " + tagName + " to " + tagValue), true);
+				}
+				else
+				{
+					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+				}
+			});
+		}
+		return players.size();
+	}
+	
+	private static int trigger(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String animationName, int actionState)
+	{
+		for(ServerPlayer player : players)
+		{
+			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			{
+				if(t.getMorph() != null)
+				{
+					Mob mob = (Mob) t.getMorph();
+					MorphUtil.setTarget(player, mob, t.getFakeTarget());
+					MorphUtil.setAnimation(mob, animationName, actionState);
+					sourceStack.sendSuccess(() -> Component.literal("Triggered animation " + animationName + " with state " + actionState), true);
 				}
 				else
 				{

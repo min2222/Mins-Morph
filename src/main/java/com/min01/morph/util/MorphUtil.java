@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
@@ -29,6 +30,7 @@ import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.network.protocol.game.DebugPackets;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -36,8 +38,11 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public class MorphUtil 
@@ -46,6 +51,51 @@ public class MorphUtil
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
 	
 	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
+	
+	public static void resetTarget(Mob mob)
+	{
+		try
+		{
+			Method m = mob.getClass().getMethod("getSyncedAnimation");
+			String animation = (String) m.invoke(mob);
+			if(animation.equals("empty") && mob.getTarget() != null)
+			{
+				mob.setTarget(null);
+			}
+		}
+		catch (SecurityException | IllegalArgumentException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e)
+		{
+			
+		}
+	}
+	
+	public static void setTarget(LivingEntity owner, Mob morph, LivingEntity fakeTarget)
+	{
+		morph.setTarget(fakeTarget);
+		HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(owner, entity -> !entity.isAlliedTo(owner), 30.0F);
+		if(hitResult instanceof EntityHitResult entityHit)
+		{
+			if(entityHit.getEntity() instanceof LivingEntity living)
+			{
+				morph.setTarget(living);
+			}
+		}
+	}
+	
+	public static void setTarget(LivingEntity owner, Mob morph, WrappedGoal goal, LivingEntity fakeTarget)
+	{
+		((IWrappedGoal) goal).setFakeTarget(fakeTarget);
+		morph.setTarget(fakeTarget);
+		HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(owner, entity -> !entity.isAlliedTo(owner), 30.0F);
+		if(hitResult instanceof EntityHitResult entityHit)
+		{
+			if(entityHit.getEntity() instanceof LivingEntity living)
+			{
+				((IWrappedGoal) goal).setTarget(living);
+				morph.setTarget(living);
+			}
+		}
+	}
 	
 	public static void getMorph(Entity entity, Consumer<LivingEntity> consumer)
 	{
@@ -126,7 +176,7 @@ public class MorphUtil
 		}
 	}
 	
-	public static void getLoadConstants(Class<?> clazz, Consumer<LdcInsnNode> consumer)
+	public static void getLoadConstants(Class<?> clazz, BiConsumer<String, LdcInsnNode> consumer)
 	{
         try
         {
@@ -138,7 +188,7 @@ public class MorphUtil
     		        if(ain.getType() == AbstractInsnNode.LDC_INSN) 
     		        {
     		        	LdcInsnNode lin = (LdcInsnNode) ain;
-    		            consumer.accept(lin);
+    		            consumer.accept(method.name, lin);
     		        }
     		    }
     		}
@@ -176,7 +226,7 @@ public class MorphUtil
 		return name;
 	}
 	
-    public static void setAnimation(Mob mob, String animationName)
+	public static void setAnimation(Mob mob, String animationName)
     {
 		try
 		{
@@ -189,18 +239,28 @@ public class MorphUtil
 		{
 			
 		}
+    }
+	
+	@SuppressWarnings("unchecked")
+	public static void setAnimation(Mob mob, String animationName, int actionState)
+	{
 		try
 		{
-			Method m = mob.getClass().getMethod("setAnimation", String.class);
-			m.invoke(mob, animationName);
+			Field f = mob.getClass().getField("DATA_currentAnimation");
+			Field f1 = mob.getClass().getField("DATA_actionState");
+			f.setAccessible(true);
+			f1.setAccessible(true);
+			EntityDataAccessor<String> accessor = (EntityDataAccessor<String>) f.get(mob);
+			EntityDataAccessor<Integer> accessor2 = (EntityDataAccessor<Integer>) f1.get(mob);
+			mob.getEntityData().set(accessor, animationName);
+			mob.getEntityData().set(accessor2, 1);
 		}
-		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException e)
 		{
 			
 		}
-    }
+	}
 	
-    //TODO
 	public static List<String> getTagNames(Class<?> clazz, List<String> list)
 	{
 		getMethodCalls(clazz, t -> 
@@ -211,9 +271,9 @@ public class MorphUtil
 				{
 					Class<?> clazz1 = Class.forName(t.owner.replace('/', '.'));
 					getTagNames(clazz1, list);
-					getLoadConstants(clazz1, t1 -> 
+					getLoadConstants(clazz1, (t1, t2) -> 
 					{
-						if(t1.cst instanceof String string)
+						if(t2.cst instanceof String string)
 						{
 							if(!string.isEmpty() && !string.contains(".") && !string.contains(":") && !list.contains(string))
 							{
