@@ -5,11 +5,11 @@ import java.util.function.Supplier;
 
 import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.util.MorphClientUtil;
+import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
@@ -17,14 +17,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 public class UpdateMorphPacket 
 {
-	private final UUID playerUUID;
+	private final UUID entityUUID;
 	private final EntityType<?> type;
 	private final int entityId;
 	private final boolean reset;
 	
-	public UpdateMorphPacket(LivingEntity player, EntityType<?> type, int entityId, boolean reset) 
+	public UpdateMorphPacket(LivingEntity entity, EntityType<?> type, int entityId, boolean reset) 
 	{
-		this.playerUUID = player.getUUID();
+		this.entityUUID = entity.getUUID();
 		this.type = type;
 		this.entityId = entityId;
 		this.reset = reset;
@@ -32,7 +32,7 @@ public class UpdateMorphPacket
 
 	public UpdateMorphPacket(FriendlyByteBuf buf)
 	{
-		this.playerUUID = buf.readUUID();
+		this.entityUUID = buf.readUUID();
 		this.type = ForgeRegistries.ENTITY_TYPES.getValue(buf.readResourceLocation());
 		this.entityId = buf.readInt();
 		this.reset = buf.readBoolean();
@@ -40,7 +40,7 @@ public class UpdateMorphPacket
 
 	public void encode(FriendlyByteBuf buf)
 	{
-		buf.writeUUID(this.playerUUID);
+		buf.writeUUID(this.entityUUID);
 		buf.writeResourceLocation(ForgeRegistries.ENTITY_TYPES.getKey(this.type));
 		buf.writeInt(this.entityId);
 		buf.writeBoolean(this.reset);
@@ -59,10 +59,10 @@ public class UpdateMorphPacket
 						@Override
 						public void run() 
 						{
-							Player player = MorphClientUtil.MC.level.getPlayerByUUID(message.playerUUID);
-							if(player != null)
+							LivingEntity entity = (LivingEntity) MorphUtil.getEntityByUUID(MorphClientUtil.MC.level, message.entityUUID);
+							if(entity != null)
 							{
-								player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+								entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
 								{
 									if(!message.reset)
 									{
@@ -72,9 +72,7 @@ public class UpdateMorphPacket
 									}
 									else
 									{
-										t.setMorph(null);
-										t.setType(null);
-										t.setPersistent(false);
+										MorphUtil.removeMorph(entity);
 									}
 								});
 							}

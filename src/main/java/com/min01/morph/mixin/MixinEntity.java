@@ -6,12 +6,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
@@ -27,16 +25,12 @@ public class MixinEntity
 				cir.setReturnValue(true);
 			}
 		}
-		entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(Entity.class.cast(this), t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(morph.isAlliedTo(Entity.class.cast(this)) || Entity.class.cast(this).isAlliedTo(morph))
-    			{
-        			cir.setReturnValue(true);
-    			}
-    		}
+			if(t.isAlliedTo(Entity.class.cast(this)) || Entity.class.cast(this).isAlliedTo(t))
+			{
+    			cir.setReturnValue(true);
+			}
 		});
 	}
 	
@@ -54,27 +48,19 @@ public class MixinEntity
 	private void fireImmune(CallbackInfoReturnable<Boolean> cir)
 	{
 		Entity entity = Entity.class.cast(this);
-		entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(entity, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			cir.setReturnValue(morph.fireImmune());
-    		}
+			cir.setReturnValue(t.fireImmune());
 		});
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "causeFallDamage", cancellable = true)
-	private void causeFallDamage(float distance, float damagae, DamageSource source, CallbackInfoReturnable<Boolean> cir)
+	private void causeFallDamage(float distance, float damage, DamageSource source, CallbackInfoReturnable<Boolean> cir)
 	{
 		Entity entity = Entity.class.cast(this);
-		entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(entity, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			cir.setReturnValue(morph.causeFallDamage(distance, damagae, source));
-    		}
+			cir.setReturnValue(t.causeFallDamage(distance, damage, source));
 		});
 	}
 	
@@ -82,13 +68,9 @@ public class MixinEntity
 	private void isInvulnerableTo(DamageSource source, CallbackInfoReturnable<Boolean> cir)
 	{
 		Entity entity = Entity.class.cast(this);
-		entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(entity, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			cir.setReturnValue(morph.isInvulnerableTo(source));
-    		}
+			cir.setReturnValue(t.isInvulnerableTo(source));
 		});
 	}
 	

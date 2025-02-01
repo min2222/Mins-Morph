@@ -1,6 +1,6 @@
 package com.min01.morph.entity;
 
-import com.min01.morph.capabilities.MorphCapabilities;
+import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.DamageTypeTags;
@@ -42,13 +42,10 @@ public class EntityFakeTarget extends AbstractOwnableMob<LivingEntity>
 			LivingEntity living = this.getOwner();
 			HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(living, entity -> !entity.isAlliedTo(living), 30.0F);
 			this.setPos(hitResult.getLocation());
-			living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			if(!MorphUtil.hasMorph(living))
 			{
-				if(t.getMorph() == null)
-				{
-					this.discard();
-				}
-			});
+				this.discard();
+			}
 		}
 	}
 	

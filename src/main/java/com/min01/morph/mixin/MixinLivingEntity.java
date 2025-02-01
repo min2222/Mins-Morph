@@ -34,7 +34,7 @@ public class MixinLivingEntity
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
 		living.getCapability(MorphCapabilities.MORPH).ifPresent(IMorphCapability::tick);
-		if(living.getId() < 0 && MorphUtil.getMorphOwner(living) == null)
+		if(MorphUtil.isMorph(living) && MorphUtil.getMorphOwner(living) == null)
 		{
 			living.discard();
 		}
@@ -54,16 +54,12 @@ public class MixinLivingEntity
 	private void getAttribute(Attribute attribute, CallbackInfoReturnable<AttributeInstance> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(MorphUtil.ATTRIBUTES.contains(attribute))
-    			{
-        			cir.setReturnValue(morph.getAttribute(attribute));
-    			}
-    		}
+			if(MorphUtil.ATTRIBUTES.contains(attribute))
+			{
+    			cir.setReturnValue(t.getAttribute(attribute));
+			}
 		});
 	}
 
@@ -71,16 +67,12 @@ public class MixinLivingEntity
 	private void getAttributeValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir) 
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
-    			{
-    	   			cir.setReturnValue(morph.getAttributeValue(holder));
-    			}
-    		}
+			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
+			{
+    			cir.setReturnValue(t.getAttributeValue(holder.value()));
+			}
 		});
 	}
 
@@ -88,16 +80,12 @@ public class MixinLivingEntity
 	private void getAttributeValue(Attribute attribute, CallbackInfoReturnable<Double> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(MorphUtil.ATTRIBUTES.contains(attribute))
-    			{
-        			cir.setReturnValue(morph.getAttributeValue(attribute));	
-    			}
-    		}
+			if(MorphUtil.ATTRIBUTES.contains(attribute))
+			{
+    			cir.setReturnValue(t.getAttributeValue(attribute));
+			}
 		});
 	}
 
@@ -105,16 +93,12 @@ public class MixinLivingEntity
 	private void getAttributeBaseValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
-    			{
-        			cir.setReturnValue(morph.getAttributeBaseValue(holder));
-    			}
-    		}
+			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
+			{
+    			cir.setReturnValue(t.getAttributeBaseValue(holder.value()));
+			}
 		});
 	}
 
@@ -122,16 +106,12 @@ public class MixinLivingEntity
 	private void getAttributeBaseValue(Attribute attribute, CallbackInfoReturnable<Double> cir) 
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(MorphUtil.ATTRIBUTES.contains(attribute))
-    			{
-        			cir.setReturnValue(morph.getAttributeBaseValue(attribute));
-    			}
-    		}
+			if(MorphUtil.ATTRIBUTES.contains(attribute))
+			{
+    			cir.setReturnValue(t.getAttributeBaseValue(attribute));
+			}
 		});
 	}
 	
@@ -139,13 +119,9 @@ public class MixinLivingEntity
 	private void isInvertedHealAndHarm(CallbackInfoReturnable<Boolean> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			cir.setReturnValue(morph.isInvertedHealAndHarm());
-    		}
+			cir.setReturnValue(t.isInvertedHealAndHarm());
 		});
 	}
 
@@ -153,22 +129,18 @@ public class MixinLivingEntity
 	private void getHurtSound(DamageSource source, CallbackInfoReturnable<SoundEvent> cir) 
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_7975_", DamageSource.class);
-    			try 
-    			{
-    				SoundEvent sound = (SoundEvent) m.invoke(morph, source);
-    				cir.setReturnValue(sound);
-    			}
-    			catch (Exception e)
-    			{
-    				
-    			}
-    		}
+			Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_7975_", DamageSource.class);
+			try
+			{
+				SoundEvent sound = (SoundEvent) m.invoke(t, source);
+				cir.setReturnValue(sound);
+			}
+			catch (Exception e)
+			{
+				
+			}
 		});
 	}
 
@@ -176,29 +148,25 @@ public class MixinLivingEntity
 	private void getDeathSound(CallbackInfoReturnable<SoundEvent> cir) 
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_5592_");
-    			try 
-    			{
-    				SoundEvent sound = (SoundEvent) m.invoke(morph);
-    				cir.setReturnValue(sound);
-    			}
-    			catch (Exception e)
-    			{
-    				
-    			}
-    		}
+			Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_5592_");
+			try
+			{
+				SoundEvent sound = (SoundEvent) m.invoke(t);
+				cir.setReturnValue(sound);
+			}
+			catch (Exception e)
+			{
+				
+			}
 		});
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "updateWalkAnimation", cancellable = true)
 	private void updateWalkAnimation(float p_268283_, CallbackInfo ci)
 	{
-		if(LivingEntity.class.cast(this).level.isClientSide && LivingEntity.class.cast(this).getId() < 0)
+		if(LivingEntity.class.cast(this).level.isClientSide && MorphUtil.isMorph(LivingEntity.class.cast(this)))
 		{
 			ci.cancel();
 		}
@@ -208,13 +176,9 @@ public class MixinLivingEntity
 	private void getArmorValue(CallbackInfoReturnable<Integer> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-				cir.setReturnValue(morph.getArmorValue());
-    		}
+			cir.setReturnValue(t.getArmorValue());
 		});
 	}
 	
@@ -222,24 +186,20 @@ public class MixinLivingEntity
 	private void hurt(DamageSource source, float damage, CallbackInfoReturnable<Boolean> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			if(source.getEntity() != null)
-    			{
-    				if(source.getEntity() == morph)
-    				{
-    					cir.setReturnValue(false);
-    				}
-    			}
-    			boolean flag = morph.hurt(source, damage);
-    			if(!flag && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
-    			{
-    				cir.setReturnValue(false);
-    			}
-    		}
+			if(source.getEntity() != null)
+			{
+				if(source.getEntity() == t)
+				{
+					cir.setReturnValue(false);
+				}
+			}
+			boolean flag = t.hurt(source, damage);
+			if(!flag && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
+			{
+				cir.setReturnValue(false);
+			}
 		});
 	}
 	
@@ -247,13 +207,9 @@ public class MixinLivingEntity
 	private void canBeAffected(MobEffectInstance effect, CallbackInfoReturnable<Boolean> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		MorphUtil.getMorph(living, t -> 
 		{
-    		LivingEntity morph = t.getMorph();
-    		if(morph != null)
-    		{
-    			cir.setReturnValue(morph.canBeAffected(effect));
-    		}
+			cir.setReturnValue(t.canBeAffected(effect));
 		});
 	}
 	

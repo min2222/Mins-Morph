@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.util.MorphUtil;
 
@@ -23,7 +22,7 @@ public class MixinMob
 	@Inject(at = @At(value = "HEAD"), method = "serverAiStep", cancellable = true)
 	private final void serverAiStep(CallbackInfo ci)
 	{
-		if(Mob.class.cast(this).getId() < 0)
+		if(MorphUtil.isMorph(Mob.class.cast(this)))
 		{
 			ci.cancel();
 		}
@@ -55,16 +54,12 @@ public class MixinMob
 				ci.cancel();
 				Mob.class.cast(this).setTarget((LivingEntity) MorphUtil.getMorphOwner(target));
 			}
-			target.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			MorphUtil.getMorph(target, t -> 
 			{
-	    		LivingEntity morph = t.getMorph();
-	    		if(morph != null)
-	    		{
-	    			if(morph.getType() == Mob.class.cast(this).getType())
-	    			{
-	    				ci.cancel();
-	    			}
-	    		}
+    			if(t.getType() == Mob.class.cast(this).getType())
+    			{
+    				ci.cancel();
+    			}
 			});
 			if(MorphUtil.getMorphOwner(Mob.class.cast(this)) == null && target instanceof EntityFakeTarget)
 			{

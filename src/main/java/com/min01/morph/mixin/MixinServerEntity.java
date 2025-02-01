@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import com.min01.morph.util.MorphUtil;
+
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -23,7 +25,7 @@ public class MixinServerEntity
     @Redirect(method = "sendPairingData", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;)V"))
     private void warn(Logger instance, String string, Object arg)
     {
-		if(this.entity.getId() < 0)
+		if(MorphUtil.isMorph(this.entity))
 		{
 			
 		}
@@ -36,7 +38,7 @@ public class MixinServerEntity
     @Redirect(method = "sendPairingData", at = @At(value = "INVOKE", target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V", ordinal = 0))
     private <T> void accept(Consumer<T> instance, T packet)
     {
-		if(this.entity.getId() < 0)
+		if(MorphUtil.isMorph(this.entity))
 		{
 			
 		}
@@ -49,7 +51,7 @@ public class MixinServerEntity
     @Redirect(method = "addPairing", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;startSeenByPlayer(Lnet/minecraft/server/level/ServerPlayer;)V"))
     private void startSeenByPlayer(Entity instance, ServerPlayer player)
     {
-		if(this.entity.getId() < 0)
+		if(MorphUtil.isMorph(this.entity))
 		{
 			
 		}

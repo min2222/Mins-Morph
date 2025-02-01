@@ -2,6 +2,7 @@ package com.min01.morph.capabilities;
 
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
+import com.min01.morph.misc.MorphType;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.UpdateMorphPacket;
 import com.min01.morph.util.MorphUtil;
@@ -25,6 +26,7 @@ public class MorphImpl implements IMorphCapability
 	private LivingEntity morph;
 	private LivingEntity target;
 	private EntityType<?> type;
+	private MorphType morphType;
 	private boolean isPersistent;
 	
 	@Override
@@ -82,13 +84,7 @@ public class MorphImpl implements IMorphCapability
 				}
 				if(!this.morph.isAlive() && !this.isPersistent)
 				{
-					this.setMorph(null);
-					this.setType(null);
-					this.setPersistent(false);
-					if(this.target != null)
-					{
-						this.target.discard();
-					}
+					MorphUtil.removeMorph(this.entity);
 				}
 			}
 		}
@@ -126,6 +122,7 @@ public class MorphImpl implements IMorphCapability
 	        	morph.setId(-number);
 			}
 			this.setType(morph.getType());
+			this.setMorphType(MorphUtil.getMorphType(morph));
 			this.setup((Mob) morph);
 			MorphUtil.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
 			MorphUtil.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
@@ -169,6 +166,18 @@ public class MorphImpl implements IMorphCapability
 	public LivingEntity getFakeTarget() 
 	{
 		return this.target;
+	}
+	
+	@Override
+	public void setMorphType(MorphType type) 
+	{
+		this.morphType = type;
+	}
+	
+	@Override
+	public MorphType getMorphType()
+	{
+		return this.morphType;
 	}
 	
 	public void sendUpdataPacket()

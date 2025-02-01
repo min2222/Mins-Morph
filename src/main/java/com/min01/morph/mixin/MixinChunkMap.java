@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.min01.morph.misc.ITrackedEntity;
+import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ChunkMap;
@@ -25,7 +26,7 @@ public class MixinChunkMap
 	@Inject(at = @At(value = "HEAD"), method = "broadcastAndSend", cancellable = true)
 	private void broadcastAndSend(Entity entity, Packet<?> packet, CallbackInfo ci)
 	{
-		if(entity.getId() < 0)
+		if(MorphUtil.isMorph(entity))
 		{
 			EntityType<?> type = entity.getType();
 			int i = type.clientTrackingRange() * 16;

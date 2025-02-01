@@ -91,6 +91,7 @@ public class GoalCommand
 				if(t.getMorph() != null)
 				{
 					Mob mob = (Mob) t.getMorph();
+					MorphUtil.getProcedureClass(mob);
 					Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
 					List<WrappedGoal> list = Lists.newArrayList(set);
 					for(WrappedGoal goal : set)

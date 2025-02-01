@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.min01.morph.util.MorphUtil;
+
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -27,7 +29,7 @@ public class MixinSynchedEntityData
 	@Inject(at = @At(value = "HEAD"), method = "set(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)V", cancellable = true)
 	private <T> void set(EntityDataAccessor<T> accessor, T value, CallbackInfo ci)
 	{
-		if(this.entity.getId() < 0)
+		if(MorphUtil.isMorph(this.entity))
 		{
 			if(ServerLifecycleHooks.getCurrentServer() != null)
 			{

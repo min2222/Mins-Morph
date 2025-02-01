@@ -40,7 +40,7 @@ public class EventHandlerForge
     {
     	if(event.getRayTraceResult() instanceof EntityHitResult entityHit)
     	{
-    		if(entityHit.getEntity().getId() < 0)
+    		if(MorphUtil.isMorph(entityHit.getEntity()))
     		{
             	event.setImpactResult(ImpactResult.SKIP_ENTITY);
     		}

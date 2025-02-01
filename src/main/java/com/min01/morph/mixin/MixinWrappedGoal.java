@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.min01.morph.misc.IWrappedGoal;
+import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -39,7 +40,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Inject(at = @At(value = "RETURN"), method = "canUse", cancellable = true)
 	private void canUse(CallbackInfoReturnable<Boolean> cir)
 	{
-		if(this.mob != null && this.mob.getId() < 0)
+		if(this.mob != null && MorphUtil.isMorph(this.mob))
 		{
 			if(this.mob.getClass().getSimpleName().equals("EntityCorpseWarlock"))
 			{
@@ -55,7 +56,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Inject(at = @At(value = "RETURN"), method = "canContinueToUse", cancellable = true)
 	private void canContinueToUse(CallbackInfoReturnable<Boolean> cir)
 	{
-		if(this.mob != null && this.mob.getId() < 0)
+		if(this.mob != null && MorphUtil.isMorph(this.mob))
 		{
 			try 
 			{
@@ -73,7 +74,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Inject(at = @At(value = "HEAD"), method = "tick", cancellable = true)
 	private void tick(CallbackInfo ci)
 	{
-		if(this.mob != null && this.mob.getId() < 0)
+		if(this.mob != null && MorphUtil.isMorph(this.mob))
 		{
 			if(this.target != null)
 			{
@@ -96,7 +97,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 	@Inject(at = @At(value = "HEAD"), method = "stop", cancellable = true)
 	private void stop(CallbackInfo ci)
 	{
-		if(this.mob != null && this.mob.getId() < 0)
+		if(this.mob != null && MorphUtil.isMorph(this.mob))
 		{
 			this.mob.setTarget(null);
 			this.canUse = false;
