@@ -189,8 +189,18 @@ public class MorphUtil
 		{
 			
 		}
+		try
+		{
+			Method m = mob.getClass().getMethod("setAnimation", String.class);
+			m.invoke(mob, animationName);
+		}
+		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+		{
+			
+		}
     }
 	
+    //TODO
 	public static List<String> getTagNames(Class<?> clazz, List<String> list)
 	{
 		getMethodCalls(clazz, t -> 

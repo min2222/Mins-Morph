@@ -1,7 +1,5 @@
 package com.min01.morph.capabilities;
 
-import java.util.ArrayList;
-
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.network.MorphNetwork;
@@ -136,7 +134,6 @@ public class MorphImpl implements IMorphCapability
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
-    			data.saveTag(mob.getClass().getSimpleName(), MorphUtil.getTagNames(mob.getClass(), new ArrayList<>()));
     			data.saveGoal(mob.getClass().getSimpleName(), MorphUtil.getGoals(mob));
     			data.saveAnimation(mob.getClass().getSimpleName(), MorphUtil.getAnimations(mob));
         	}
