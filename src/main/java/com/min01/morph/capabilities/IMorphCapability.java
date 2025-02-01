@@ -1,7 +1,6 @@
 package com.min01.morph.capabilities;
 
 import com.min01.morph.MinsMorph;
-import com.min01.morph.misc.MorphType;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -32,8 +31,4 @@ public interface IMorphCapability extends INBTSerializable<CompoundTag>
 	EntityType<?> getType();
 	
 	LivingEntity getFakeTarget();
-	
-	void setMorphType(MorphType type);
-	
-	MorphType getMorphType();
 }

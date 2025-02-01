@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -27,7 +27,6 @@ import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.capabilities.MorphImpl;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
-import com.min01.morph.misc.MorphType;
 
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.world.entity.Entity;
@@ -47,35 +46,6 @@ public class MorphUtil
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
 	
 	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
-	
-	public static MorphType getMorphType(LivingEntity living)
-	{
-		Field[] fields = living.getClass().getDeclaredFields();
-		AtomicBoolean mcreator = new AtomicBoolean();
-		for(Field f : fields)
-		{
-			if(f.getType().getSimpleName().equals("AnimationState"))
-			{
-				return MorphType.VANILLA;
-			}
-			else if(f.getType().getSimpleName().contains("Animation"))
-			{
-				return MorphType.LLIBRARY;
-			}
-		}
-		getMethodCalls(living.getClass(), t -> 
-		{
-			if(t.owner.contains("Procedure"))
-			{
-				mcreator.set(true);
-			}
-		});
-		if(mcreator.get())
-		{
-			return MorphType.MCREATOR;
-		}
-		return MorphType.VANILLA;
-	}
 	
 	public static void getMorph(Entity entity, Consumer<LivingEntity> consumer)
 	{
@@ -108,25 +78,7 @@ public class MorphUtil
 			t.setType(null);
 			t.setPersistent(false);
 		});
-	}
-	
-	public static void getProcedureClass(Mob mob)
-	{
-		getMethodCalls(mob.getClass(), t -> 
-		{
-			if(t.name.contains("execute") && t.owner.contains("Procedure"))
-			{
-				try
-				{
-					Class<?> clazz = Class.forName(t.owner.replace('/', '.'));
-				} 
-				catch (ClassNotFoundException e) 
-				{
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+	}	
 	
 	public static void getMethodCalls(Class<?> clazz, Consumer<MethodInsnNode> consumer)
 	{
@@ -155,7 +107,7 @@ public class MorphUtil
 	{
         try
         {
-    		ClassNode classNode = MorphUtil.getClassNode(clazz);
+    		ClassNode classNode = getClassNode(clazz);
     		for(MethodNode method : classNode.methods)
     		{
     		    for(AbstractInsnNode ain : method.instructions.toArray())
@@ -164,6 +116,29 @@ public class MorphUtil
     		        {
     		        	FieldInsnNode fin = (FieldInsnNode) ain;
     		            consumer.accept(fin);
+    		        }
+    		    }
+    		}
+        }
+        catch (IOException | SecurityException e) 
+        {
+        	
+		}
+	}
+	
+	public static void getLoadConstants(Class<?> clazz, Consumer<LdcInsnNode> consumer)
+	{
+        try
+        {
+    		ClassNode classNode = getClassNode(clazz);
+    		for(MethodNode method : classNode.methods)
+    		{
+    		    for(AbstractInsnNode ain : method.instructions.toArray())
+    		    {
+    		        if(ain.getType() == AbstractInsnNode.LDC_INSN) 
+    		        {
+    		        	LdcInsnNode lin = (LdcInsnNode) ain;
+    		            consumer.accept(lin);
     		        }
     		    }
     		}
@@ -215,6 +190,36 @@ public class MorphUtil
 			
 		}
     }
+	
+	public static List<String> getTagNames(Class<?> clazz, List<String> list)
+	{
+		getMethodCalls(clazz, t -> 
+		{
+			if(t.name.contains("execute") && t.owner.contains("Procedure"))
+			{
+				try
+				{
+					Class<?> clazz1 = Class.forName(t.owner.replace('/', '.'));
+					getTagNames(clazz1, list);
+					getLoadConstants(clazz1, t1 -> 
+					{
+						if(t1.cst instanceof String string)
+						{
+							if(!string.isEmpty() && !string.contains(".") && !string.contains(":") && !list.contains(string))
+							{
+								list.add(string);
+							}
+						}
+					});
+				}
+				catch (ClassNotFoundException e) 
+				{
+					
+				}
+			}
+		});
+		return list;
+	}
     
 	public static List<String> getGoals(Mob mob)
 	{
