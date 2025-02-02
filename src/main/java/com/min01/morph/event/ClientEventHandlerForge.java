@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -67,12 +66,9 @@ public class ClientEventHandlerForge
 					GeoEntityRenderer<T> geoRenderer = (GeoEntityRenderer<T>) renderer;
 					T animatable = (T) t;
 					geoRenderer.render(animatable, yaw, event.getPartialTick(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
+					return;
 	    		}
-        		if(renderer instanceof LivingEntityRenderer)
-        		{
-        			LivingEntityRenderer<? super LivingEntity, ?> livingRenderer = (LivingEntityRenderer<? super LivingEntity, ?>) renderer;
-        			livingRenderer.render(t, yaw, event.getPartialTick(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
-        		}
+    			renderer.render((E) t, yaw, event.getPartialTick(), event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
     		}
     	});
 	}

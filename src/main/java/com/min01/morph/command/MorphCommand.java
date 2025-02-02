@@ -207,6 +207,7 @@ public class MorphCommand
 				{
 					Mob mob = (Mob) t.getMorph();
 					MorphUtil.setData(mob, dataName, dataValue);
+					t.setData(player, dataName, dataValue);
 					sourceStack.sendSuccess(() -> Component.literal("Changed entity data " + dataName + " to " + dataValue), true);
 				}
 			});

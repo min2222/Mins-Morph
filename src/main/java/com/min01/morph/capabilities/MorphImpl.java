@@ -1,5 +1,11 @@
 package com.min01.morph.capabilities;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.network.MorphNetwork;
@@ -8,6 +14,7 @@ import com.min01.morph.util.MorphUtil;
 import com.min01.morph.util.world.MorphSavedData;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,16 +33,31 @@ public class MorphImpl implements IMorphCapability
 	private LivingEntity target;
 	private EntityType<?> type;
 	private boolean isPersistent;
+	private List<Map<String, String>> dataList = new ArrayList<>();
 	
 	@Override
 	public CompoundTag serializeNBT() 
 	{
 		CompoundTag nbt = new CompoundTag();
+		ListTag datas = new ListTag();
+		this.dataList.forEach(t -> 
+		{
+			for(Entry<String, String> entry : t.entrySet())
+			{
+				String dataName = entry.getKey();
+				String dataValue = entry.getValue();
+				CompoundTag tag = new CompoundTag();
+				tag.putString("DataName", dataName);
+				tag.putString("DataValue", dataValue);
+				datas.add(tag);
+			}
+		});
 		if(this.type != null)
 		{
 			nbt.putString("MorphType", ForgeRegistries.ENTITY_TYPES.getKey(this.type).toString());
 		}
 		nbt.putBoolean("isPersistent", this.isPersistent);
+		nbt.put("MobDatas", datas);
 		return nbt;
 	}
 
@@ -45,6 +67,16 @@ public class MorphImpl implements IMorphCapability
 		if(nbt.contains("MorphType"))
 		{
 			this.type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(nbt.getString("MorphType")));
+		}
+		ListTag datas = nbt.getList("MobDatas", 11);
+		for(int i = 0; i < datas.size(); ++i)
+		{
+			CompoundTag tag = datas.getCompound(i);
+			Map<String, String> map = new HashMap<>();
+			String dataName = tag.getString("DataName");
+			String dataValue = tag.getString("DataValue");
+			map.put(dataName, dataValue);
+			this.dataList.add(map);
 		}
 		this.isPersistent = nbt.getBoolean("isPersistent");
 	}
@@ -61,7 +93,6 @@ public class MorphImpl implements IMorphCapability
 		if(this.morph != null)
 		{
 			MorphUtil.tick(this.entity, this.morph);
-			MorphUtil.resetTarget((Mob) this.morph);
 			this.morph.tick();
 			if(this.entity instanceof Player player)
 			{
@@ -112,7 +143,6 @@ public class MorphImpl implements IMorphCapability
 		{
 			this.morph.discard();
 		}
-		this.morph = morph;
 		if(morph != null)
 		{
 			if(morph.getId() > 0)
@@ -125,6 +155,7 @@ public class MorphImpl implements IMorphCapability
 			MorphUtil.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
 			MorphUtil.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
 		}
+		this.morph = morph;
 		this.sendUpdataPacket();
 	}
 	
@@ -132,6 +163,18 @@ public class MorphImpl implements IMorphCapability
 	{
 		if(!mob.level.isClientSide)
 		{
+			if(this.isPersistent)
+			{
+				this.dataList.forEach(t -> 
+				{
+					for(Entry<String, String> entry : t.entrySet())
+					{
+						String dataName = entry.getKey();
+						String dataValue = entry.getValue();
+						MorphUtil.setData(mob, dataName, dataValue);
+					}
+				});
+			}
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
@@ -165,6 +208,14 @@ public class MorphImpl implements IMorphCapability
 	public LivingEntity getFakeTarget() 
 	{
 		return this.target;
+	}
+	
+	@Override
+	public void setData(LivingEntity living, String dataName, String dataValue) 
+	{
+		Map<String, String> map = new HashMap<>();
+		map.put(dataName, dataValue);
+		this.dataList.add(map);
 	}
 	
 	public void sendUpdataPacket()

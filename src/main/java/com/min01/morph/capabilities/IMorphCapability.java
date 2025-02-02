@@ -31,4 +31,6 @@ public interface IMorphCapability extends INBTSerializable<CompoundTag>
 	EntityType<?> getType();
 	
 	LivingEntity getFakeTarget();
+	
+	void setData(LivingEntity living, String dataName, String dataValue);
 }

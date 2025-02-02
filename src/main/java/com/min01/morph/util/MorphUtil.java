@@ -13,13 +13,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import org.apache.logging.log4j.util.TriConsumer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -32,6 +29,7 @@ import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -52,23 +50,6 @@ public class MorphUtil
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
 	
 	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
-	
-	public static void resetTarget(Mob mob)
-	{
-		try
-		{
-			Method m = mob.getClass().getMethod("getSyncedAnimation");
-			String animation = (String) m.invoke(mob);
-			if(animation.equals("empty") && mob.getTarget() != null)
-			{
-				mob.setTarget(null);
-			}
-		}
-		catch (SecurityException | IllegalArgumentException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e)
-		{
-			
-		}
-	}
 	
 	public static void setTarget(LivingEntity owner, Mob morph, LivingEntity fakeTarget)
 	{
@@ -128,116 +109,9 @@ public class MorphUtil
 			t.setMorph(null);
 			t.setType(null);
 			t.setPersistent(false);
+			living.refreshDimensions();
 		});
-	}	
-	
-	public static void getMethodCalls(Class<?> clazz, Consumer<MethodInsnNode> consumer)
-	{
-        try
-        {
-    		ClassNode classNode = getClassNode(clazz);
-    		for(MethodNode method : classNode.methods)
-    		{
-    		    for(AbstractInsnNode ain : method.instructions.toArray())
-    		    {
-    		        if(ain.getType() == AbstractInsnNode.METHOD_INSN) 
-    		        {
-    		        	MethodInsnNode min = (MethodInsnNode) ain;
-    		            consumer.accept(min);
-    		        }
-    		    }
-    		}
-        }
-        catch (IOException | SecurityException e) 
-        {
-        	
-		}
 	}
-	
-	public static void getFieldCalls(Class<?> clazz, Consumer<FieldInsnNode> consumer)
-	{
-        try
-        {
-    		ClassNode classNode = getClassNode(clazz);
-    		for(MethodNode method : classNode.methods)
-    		{
-    		    for(AbstractInsnNode ain : method.instructions.toArray())
-    		    {
-    		        if(ain.getType() == AbstractInsnNode.FIELD_INSN) 
-    		        {
-    		        	FieldInsnNode fin = (FieldInsnNode) ain;
-    		            consumer.accept(fin);
-    		        }
-    		    }
-    		}
-        }
-        catch (IOException | SecurityException e) 
-        {
-        	
-		}
-	}
-
-    //ChatGPT ahh;
-	public static void getLoadConstants(Class<?> clazz, TriConsumer<String, String, MethodInsnNode> consumer) 
-	{
-	    try 
-	    {
-	        ClassNode classNode = getClassNode(clazz);
-	        for(MethodNode method : classNode.methods) 
-	        {
-	            AbstractInsnNode[] instructions = method.instructions.toArray();
-	            for(int i = 0; i < instructions.length - 2; i++) 
-	            {
-	                if(instructions[i] instanceof MethodInsnNode getPersistentDataNode) 
-	                {
-	                    if(instructions[i + 1] instanceof LdcInsnNode keyNode) 
-	                    {
-	                        if(keyNode.cst instanceof String key) 
-	                        {
-	                            if(!key.isBlank()) 
-	                            {
-	    	                    	if(instructions[i + 2] instanceof LdcInsnNode valueNode)
-	    	                    	{
-	                                    consumer.accept(key, valueNode.cst.toString(), getPersistentDataNode);
-	    	                    	}
-	    	                    	else if(instructions[i + 2] instanceof InsnNode)
-	    	                    	{
-	    	                    		consumer.accept(key, Double.toString(0.0d), getPersistentDataNode);
-	    	                    	}
-	                            }
-	                        }
-	                    }
-	                }
-	            }
-	        }
-	    } 
-	    catch (IOException | SecurityException e) 
-	    {
-	    	
-	    }
-	}
-
-    //ChatGPT ahh;
-    public static ClassNode getClassNode(Class<?> clazz) throws IOException
-    {
-        String className = clazz.getName().replace('.', '/') + ".class";
-        ClassLoader classLoader = clazz.getClassLoader();
-        if(classLoader == null)
-        {
-        	classLoader = ClassLoader.getSystemClassLoader();
-        }
-        try(InputStream classStream = classLoader.getResourceAsStream(className))
-        {
-            if(classStream == null)
-            {
-                throw new IOException("Class not found: " + clazz.getName());
-            }
-            ClassReader classReader = new ClassReader(classStream);
-            ClassNode classNode = new ClassNode();
-            classReader.accept(classNode, 0);
-            return classNode;
-        }
-    }
     
 	public static String getGoalName(Goal goal)
 	{
@@ -254,12 +128,31 @@ public class MorphUtil
 	{
 		try
 		{
-			Field f = mob.getClass().getField(dataName);
+			Field f = mob.getClass().getDeclaredField(dataName);
 			f.setAccessible(true);
             if(dataValue.equalsIgnoreCase("true") || dataValue.equalsIgnoreCase("false")) 
             {
             	EntityDataAccessor<Boolean> accessor = (EntityDataAccessor<Boolean>) f.get(mob);
-            	mob.getEntityData().set(accessor, Boolean.parseBoolean(dataValue));
+            	if(accessor.getSerializer() == EntityDataSerializers.BOOLEAN)
+            	{
+            		mob.getEntityData().set(accessor, Boolean.parseBoolean(dataValue));
+            	}
+            }
+            else if(dataValue.contains("."))
+            {
+                try 
+                {
+                    float value = Float.parseFloat(dataValue);
+                	EntityDataAccessor<Float> accessor = (EntityDataAccessor<Float>) f.get(mob);
+                	if(accessor.getSerializer() == EntityDataSerializers.FLOAT)
+                	{
+                    	mob.getEntityData().set(accessor, value);
+                	}
+                }
+                catch (NumberFormatException e)
+                {
+                	
+                }
             }
             else
             {
@@ -267,12 +160,18 @@ public class MorphUtil
                 {
                     int value = Integer.parseInt(dataValue);
                 	EntityDataAccessor<Integer> accessor = (EntityDataAccessor<Integer>) f.get(mob);
-                	mob.getEntityData().set(accessor, value);
+                	if(accessor.getSerializer() == EntityDataSerializers.INT)
+                	{
+                    	mob.getEntityData().set(accessor, value);
+                	}
                 }
                 catch (NumberFormatException e)
                 {
                 	EntityDataAccessor<String> accessor = (EntityDataAccessor<String>) f.get(mob);
-                	mob.getEntityData().set(accessor, dataValue);
+                	if(accessor.getSerializer() == EntityDataSerializers.STRING)
+                	{
+                    	mob.getEntityData().set(accessor, dataValue);
+                	}
                 }
             }
 		}
@@ -284,14 +183,42 @@ public class MorphUtil
 	
 	public static void setAnimation(Mob mob, String animationName)
     {
+		//Citadel/LLibrary/Lionfish API/EEEAB's Mobs
 		try
 		{
-			Field f = mob.getClass().getField(animationName);
+			Field f = mob.getClass().getDeclaredField(animationName);
 			Method m = mob.getClass().getMethod("setAnimation", f.getType());
 			f.setAccessible(true);
 			m.invoke(mob, f.get(mob));
 		}
 		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+		{
+			
+		}
+		//Mowzie
+		//FIXME not working;
+		try
+		{
+			Field f = mob.getClass().getDeclaredField(animationName);
+			Method m = mob.getClass().getSuperclass().getMethod("sendAbilityMessage", f.getType());
+			f.setAccessible(true);
+			m.invoke(mob, f.get(mob));
+		}
+		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+		{
+			
+		}
+		//Aquamirae
+		//TODO
+		try
+		{
+			Field f = mob.getClass().getDeclaredField("ANIMATIONS");
+			f.setAccessible(true);
+			Object obj = f.get(mob);
+			Method m = obj.getClass().getMethod("play", String.class, int.class);
+			m.invoke(obj, animationName, 52);
+		}
+		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException | InvocationTargetException e)
 		{
 			
 		}
@@ -356,13 +283,90 @@ public class MorphUtil
 				list.add(f.getName());
 			}
 		}
+		//Mowzie
+		for(Field f : clazz.getDeclaredFields())
+		{
+			if(f.getType().getSimpleName().contains("AbilityType") && !f.getType().isArray())
+			{
+				list.add(f.getName());
+			}
+		}
 		return list;
 	}
+	
+	public static void getMethodCalls(Class<?> clazz, Consumer<MethodInsnNode> consumer)
+	{
+        try
+        {
+    		ClassNode classNode = getClassNode(clazz);
+    		for(MethodNode method : classNode.methods)
+    		{
+    		    for(AbstractInsnNode ain : method.instructions.toArray())
+    		    {
+    		        if(ain.getType() == AbstractInsnNode.METHOD_INSN) 
+    		        {
+    		        	MethodInsnNode min = (MethodInsnNode) ain;
+    		            consumer.accept(min);
+    		        }
+    		    }
+    		}
+        }
+        catch (IOException | SecurityException e) 
+        {
+        	
+		}
+	}
+	
+	public static void getFieldCalls(Class<?> clazz, Consumer<FieldInsnNode> consumer)
+	{
+        try
+        {
+    		ClassNode classNode = getClassNode(clazz);
+    		for(MethodNode method : classNode.methods)
+    		{
+    		    for(AbstractInsnNode ain : method.instructions.toArray())
+    		    {
+    		        if(ain.getType() == AbstractInsnNode.FIELD_INSN) 
+    		        {
+    		        	FieldInsnNode fin = (FieldInsnNode) ain;
+    		            consumer.accept(fin);
+    		        }
+    		    }
+    		}
+        }
+        catch (IOException | SecurityException e) 
+        {
+        	
+		}
+	}
+
+    //ChatGPT ahh;
+    public static ClassNode getClassNode(Class<?> clazz) throws IOException
+    {
+        String className = clazz.getName().replace('.', '/') + ".class";
+        ClassLoader classLoader = clazz.getClassLoader();
+        if(classLoader == null)
+        {
+        	classLoader = ClassLoader.getSystemClassLoader();
+        }
+        try(InputStream classStream = classLoader.getResourceAsStream(className))
+        {
+            if(classStream == null)
+            {
+                throw new IOException("Class not found: " + clazz.getName());
+            }
+            ClassReader classReader = new ClassReader(classStream);
+            ClassNode classNode = new ClassNode();
+            classReader.accept(classNode, 0);
+            return classNode;
+        }
+    }
     
     public static void tick(LivingEntity player, LivingEntity morph)
     {
     	morph.getPersistentData().putUUID("MorphOwnerUUID", player.getUUID());
     	player.eyeHeight = morph.getEyeHeight();
+    	//player.dimensions = morph.dimensions;
 		if(!player.isAlive())
 		{
 			morph.discard();

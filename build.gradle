@@ -175,6 +175,7 @@ dependencies {
 	runtimeOnly fg.deobf("curse.maven:lionfish-api-1001614:5922047")
 	runtimeOnly fg.deobf("curse.maven:illage-and-spillage-finally-ported-1079714:6132120")
 	runtimeOnly fg.deobf("curse.maven:citadel-331936:6002521")
+	runtimeOnly fg.deobf("curse.maven:alexs-caves-924854:5848216")
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
