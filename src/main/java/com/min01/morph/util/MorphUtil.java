@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.util.TriConsumer;
@@ -19,6 +18,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -31,6 +31,7 @@ import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
 
 import net.minecraft.network.protocol.game.DebugPackets;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -40,7 +41,6 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -177,10 +177,10 @@ public class MorphUtil
 		}
 	}
 
-	//ChatGPT ahhh;
-	public static void getLoadConstants(Class<?> clazz, TriConsumer<String, LdcInsnNode, MethodInsnNode> consumer) 
+    //ChatGPT ahh;
+	public static void getLoadConstants(Class<?> clazz, TriConsumer<String, String, MethodInsnNode> consumer) 
 	{
-	    try
+	    try 
 	    {
 	        ClassNode classNode = getClassNode(clazz);
 	        for(MethodNode method : classNode.methods) 
@@ -188,18 +188,24 @@ public class MorphUtil
 	            AbstractInsnNode[] instructions = method.instructions.toArray();
 	            for(int i = 0; i < instructions.length - 2; i++) 
 	            {
-	                if(instructions[i].getType() == AbstractInsnNode.LDC_INSN && instructions[i + 1].getType() == AbstractInsnNode.LDC_INSN && instructions[i + 2].getType() == AbstractInsnNode.METHOD_INSN) 
+	                if(instructions[i] instanceof MethodInsnNode getPersistentDataNode) 
 	                {
-	                    LdcInsnNode keyNode = (LdcInsnNode) instructions[i];
-	                    LdcInsnNode valueNode = (LdcInsnNode) instructions[i + 1];
-	                    MethodInsnNode methodNode = (MethodInsnNode) instructions[i + 2];
-
-	                    if(keyNode.cst instanceof String string)
+	                    if(instructions[i + 1] instanceof LdcInsnNode keyNode) 
 	                    {
-	                    	if(!string.isBlank())
-	                    	{
-		                        consumer.accept(string, valueNode, methodNode);
-	                    	}
+	                        if(keyNode.cst instanceof String key) 
+	                        {
+	                            if(!key.isBlank()) 
+	                            {
+	    	                    	if(instructions[i + 2] instanceof LdcInsnNode valueNode)
+	    	                    	{
+	                                    consumer.accept(key, valueNode.cst.toString(), getPersistentDataNode);
+	    	                    	}
+	    	                    	else if(instructions[i + 2] instanceof InsnNode)
+	    	                    	{
+	    	                    		consumer.accept(key, Double.toString(0.0d), getPersistentDataNode);
+	    	                    	}
+	                            }
+	                        }
 	                    }
 	                }
 	            }
@@ -210,12 +216,17 @@ public class MorphUtil
 	    	
 	    }
 	}
-	
-	//ChatGPT ahhh;
+
+    //ChatGPT ahh;
     public static ClassNode getClassNode(Class<?> clazz) throws IOException
     {
         String className = clazz.getName().replace('.', '/') + ".class";
-        try(InputStream classStream = clazz.getClassLoader().getResourceAsStream(className))
+        ClassLoader classLoader = clazz.getClassLoader();
+        if(classLoader == null)
+        {
+        	classLoader = ClassLoader.getSystemClassLoader();
+        }
+        try(InputStream classStream = classLoader.getResourceAsStream(className))
         {
             if(classStream == null)
             {
@@ -238,6 +249,39 @@ public class MorphUtil
 		return name;
 	}
 	
+	@SuppressWarnings("unchecked")
+	public static void setData(Mob mob, String dataName, String dataValue)
+	{
+		try
+		{
+			Field f = mob.getClass().getField(dataName);
+			f.setAccessible(true);
+            if(dataValue.equalsIgnoreCase("true") || dataValue.equalsIgnoreCase("false")) 
+            {
+            	EntityDataAccessor<Boolean> accessor = (EntityDataAccessor<Boolean>) f.get(mob);
+            	mob.getEntityData().set(accessor, Boolean.parseBoolean(dataValue));
+            }
+            else
+            {
+                try 
+                {
+                    int value = Integer.parseInt(dataValue);
+                	EntityDataAccessor<Integer> accessor = (EntityDataAccessor<Integer>) f.get(mob);
+                	mob.getEntityData().set(accessor, value);
+                }
+                catch (NumberFormatException e)
+                {
+                	EntityDataAccessor<String> accessor = (EntityDataAccessor<String>) f.get(mob);
+                	mob.getEntityData().set(accessor, dataValue);
+                }
+            }
+		}
+		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException e)
+		{
+			
+		}
+	}
+	
 	public static void setAnimation(Mob mob, String animationName)
     {
 		try
@@ -251,86 +295,25 @@ public class MorphUtil
 		{
 			
 		}
-		
-		try
-		{
-			if(!animationName.isEmpty())
-			{
-				Method m = mob.getClass().getMethod("setAnimation", String.class);
-				m.invoke(mob, animationName);
-			}
-		}
-		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | InvocationTargetException e)
-		{
-			
-		}
     }
 	
-	public static void triggerProcedure(Mob mob, String procedureName)
+	public static List<String> getDatas(Class<?> clazz)
 	{
-		try
+		List<String> list = new ArrayList<>();
+		for(Field f : clazz.getDeclaredFields())
 		{
-			Class<?> clazz = Class.forName(procedureName);
-			Method m = clazz.getMethod("execute", LevelAccessor.class, double.class, double.class, double.class, Entity.class);
-			m.invoke(null, mob.level, mob.getX(), mob.getY(), mob.getZ(), mob);
-		}
-		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | InvocationTargetException | ClassNotFoundException e)
-		{
-			
-		}
-	}
-	
-	public static void getTags(Class<?> clazz, BiConsumer<String, String> consumer)
-	{
-		getMethodCalls(clazz, t -> 
-		{
-			if(t.name.contains("execute") && t.owner.contains("Procedure"))
+			if(f.getType().getSimpleName().equals("EntityDataAccessor"))
 			{
-				try
-				{
-					Class<?> clazz1 = Class.forName(t.owner.replace('/', '.'));
-					if(clazz != clazz1)
-					{
-						getTags(clazz1, consumer);
-					}
-					getLoadConstants(clazz1, (string, value, method) -> 
-					{
-						if(method.name.contains("put") || method.name.contains("get"))
-						{
-							consumer.accept(string, value.cst.toString());
-						}
-					});
-				}
-				catch (ClassNotFoundException e) 
-				{
-					
-				}
+				list.add(f.getName());
 			}
-		});
-	}
-	
-	public static List<String> getProcedures(Class<?> clazz, List<String> list)
-	{
-		getMethodCalls(clazz, t -> 
+		}
+		for(Field f : clazz.getSuperclass().getDeclaredFields())
 		{
-			if(t.name.contains("execute") && t.owner.contains("Procedure"))
+			if(f.getType().getSimpleName().equals("EntityDataAccessor"))
 			{
-				try
-				{
-					String name = t.owner.replace('/', '.');
-					Class<?> clazz1 = Class.forName(name);
-					if(clazz != clazz1)
-					{
-						getProcedures(clazz1, list);
-					}
-					list.add(name);
-				}
-				catch (ClassNotFoundException e) 
-				{
-					
-				}
+				list.add(f.getName());
 			}
-		});
+		}
 		return list;
 	}
     
@@ -356,17 +339,17 @@ public class MorphUtil
 		return list;
 	}
 	
-	public static List<String> getAnimations(Mob mob)
+	public static List<String> getAnimations(Class<?> clazz)
 	{
 		List<String> list = new ArrayList<>();
-		for(Field f : mob.getClass().getDeclaredFields())
+		for(Field f : clazz.getDeclaredFields())
 		{
 			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
 			{
 				list.add(f.getName());
 			}
 		}
-		for(Field f : mob.getClass().getSuperclass().getDeclaredFields())
+		for(Field f : clazz.getSuperclass().getDeclaredFields())
 		{
 			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
 			{

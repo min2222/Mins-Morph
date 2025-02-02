@@ -2,7 +2,6 @@ package com.min01.morph.command;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -42,7 +41,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 
 public class MorphCommand 
 {
-	public static final SuggestionProvider<CommandSourceStack> TAG_VALUES = SuggestionProviders.register(new ResourceLocation("tag_values"), (p_258164_, p_258165_) -> 
+	public static final SuggestionProvider<CommandSourceStack> DATAS = SuggestionProviders.register(new ResourceLocation("datas"), (p_258164_, p_258165_) -> 
 	{
 		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
 		{
@@ -52,43 +51,7 @@ public class MorphCommand
         		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
         		if(cap.getMorph() != null)
         		{
-        			List<Map<String, String>> list = data.getTags(cap.getMorph().getClass().getSimpleName());
-            		return SharedSuggestionProvider.suggest(list.stream().flatMap(map -> map.values().stream()), p_258165_);
-        		}
-        	}
-		}
-		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
-	});
-	
-	public static final SuggestionProvider<CommandSourceStack> TAGS = SuggestionProviders.register(new ResourceLocation("tags"), (p_258164_, p_258165_) -> 
-	{
-		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
-		{
-			MorphSavedData data = MorphSavedData.get(player.level);
-        	if(data != null)
-        	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
-        		if(cap.getMorph() != null)
-        		{
-        			List<Map<String, String>> list = data.getTags(cap.getMorph().getClass().getSimpleName());
-            		return SharedSuggestionProvider.suggest(list.stream().flatMap(map -> map.keySet().stream()), p_258165_);
-        		}
-        	}
-		}
-		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
-	});
-	
-	public static final SuggestionProvider<CommandSourceStack> PROCEDURES = SuggestionProviders.register(new ResourceLocation("procedure"), (p_258164_, p_258165_) -> 
-	{
-		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
-		{
-			MorphSavedData data = MorphSavedData.get(player.level);
-        	if(data != null)
-        	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
-        		if(cap.getMorph() != null)
-        		{
-            		return SharedSuggestionProvider.suggest(data.getProcedures(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+            		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
         		}
         	}
 		}
@@ -157,15 +120,9 @@ public class MorphCommand
 		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("trigger").then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes(commandCtx -> 
 		{
 			return triggerGoalWithAnimation(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "animationName"));
-		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("procedure").then(Commands.argument("procedureName", StringArgumentType.string()).suggests(PROCEDURES).executes(commandCtx -> 
+		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("data").then(Commands.argument("dataName", StringArgumentType.string()).suggests(DATAS).then(Commands.argument("dataValue", StringArgumentType.string()).executes(commandCtx -> 
 		{
-			return triggerProcedure(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "procedureName"), "");
-		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("procedure").then(Commands.argument("procedureName", StringArgumentType.string()).suggests(PROCEDURES).then(Commands.argument("animationName", StringArgumentType.string()).executes(commandCtx -> 
-		{
-			return triggerProcedure(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "procedureName"), StringArgumentType.getString(commandCtx, "animationName"));
-		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("tag").then(Commands.argument("tagName", StringArgumentType.string()).suggests(TAGS).then(Commands.argument("tagValue", StringArgumentType.string()).suggests(TAG_VALUES).executes(commandCtx -> 
-		{
-			return setTag(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "tagName"), StringArgumentType.getString(commandCtx, "tagValue"));
+			return setData(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "dataName"), StringArgumentType.getString(commandCtx, "dataValue"));
 		}))))));
 	}
 	
@@ -240,7 +197,7 @@ public class MorphCommand
 		return players.size();
 	}
 	
-	private static int triggerProcedure(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String procedureName, String animationName)
+	private static int setData(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String dataName, String dataValue)
 	{
 		for(ServerPlayer player : players)
 		{
@@ -249,42 +206,8 @@ public class MorphCommand
 				if(t.getMorph() != null)
 				{
 					Mob mob = (Mob) t.getMorph();
-					MorphUtil.setTarget(player, mob, t.getFakeTarget());
-					MorphUtil.triggerProcedure(mob, procedureName);
-					MorphUtil.setAnimation(mob, animationName);
-					sourceStack.sendSuccess(() -> Component.literal("Triggered procedure " + procedureName), true);
-				}
-				else
-				{
-					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
-				}
-			});
-		}
-		return players.size();
-	}
-	
-	private static int setTag(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String tagName, String tagValue)
-	{
-		for(ServerPlayer player : players)
-		{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
-			{
-				if(t.getMorph() != null)
-				{
-					Mob mob = (Mob) t.getMorph();
-					if(tagValue.equals("true") || tagValue.equals("false"))
-					{
-						mob.getPersistentData().putBoolean(tagName, Boolean.getBoolean(tagName));
-					}
-					else if(tagValue.contains("."))
-					{
-						mob.getPersistentData().putDouble(tagName, Double.parseDouble(tagName));
-					}
-					else
-					{
-						mob.getPersistentData().putString(tagName, tagValue);
-					}
-					sourceStack.sendSuccess(() -> Component.literal("Set tag " + tagName + " to " + tagValue), true);
+					MorphUtil.setData(mob, dataName, dataValue);
+					sourceStack.sendSuccess(() -> Component.literal("Changed entity data " + dataName + " to " + dataValue), true);
 				}
 			});
 		}

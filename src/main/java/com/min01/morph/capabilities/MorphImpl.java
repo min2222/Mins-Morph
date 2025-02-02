@@ -1,10 +1,5 @@
 package com.min01.morph.capabilities;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.network.MorphNetwork;
@@ -140,20 +135,9 @@ public class MorphImpl implements IMorphCapability
 			MorphSavedData data = MorphSavedData.get(mob.level);
         	if(data != null)
         	{
-        		List<Map<String, String>> list = new ArrayList<>();
-        		MorphUtil.getTags(mob.getClass(), (key, value) -> 
-        		{
-        			Map<String, String> map = new HashMap<>();
-        			if(!map.containsValue(value))
-        			{
-            			map.put(key, value);
-        			}
-        			list.add(map);
-        			data.saveTag(mob.getClass().getSimpleName(), list);
-        		});
-    			data.saveProcedure(mob.getClass().getSimpleName(), MorphUtil.getProcedures(mob.getClass(), new ArrayList<>()));
+    			data.saveData(mob.getClass().getSimpleName(), MorphUtil.getDatas(mob.getClass()));
     			data.saveGoal(mob.getClass().getSimpleName(), MorphUtil.getGoals(mob));
-    			data.saveAnimation(mob.getClass().getSimpleName(), MorphUtil.getAnimations(mob));
+    			data.saveAnimation(mob.getClass().getSimpleName(), MorphUtil.getAnimations(mob.getClass()));
         	}
 			ForgeEventFactory.onFinalizeSpawn((Mob) mob, (ServerLevelAccessor) this.entity.level, this.entity.level.getCurrentDifficultyAt(this.entity.blockPosition()), MobSpawnType.COMMAND, null, null);
 		}
