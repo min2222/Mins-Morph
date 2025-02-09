@@ -25,7 +25,7 @@ public class MorphCapabilities
 			{
 				LazyOptional<IMorphCapability> inst = LazyOptional.of(() -> 
 				{
-					MorphImpl i = new MorphImpl();
+					MorphCapabilityImpl i = new MorphCapabilityImpl();
 					i.setEntity(living);
 					return i;
 				});

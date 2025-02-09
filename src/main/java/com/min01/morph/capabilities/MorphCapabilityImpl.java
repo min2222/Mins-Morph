@@ -26,7 +26,7 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
-public class MorphImpl implements IMorphCapability
+public class MorphCapabilityImpl implements IMorphCapability
 {
 	private LivingEntity entity;
 	private LivingEntity morph;

@@ -176,6 +176,15 @@ dependencies {
 	runtimeOnly fg.deobf("curse.maven:illage-and-spillage-finally-ported-1079714:6132120")
 	runtimeOnly fg.deobf("curse.maven:citadel-331936:6002521")
 	runtimeOnly fg.deobf("curse.maven:alexs-caves-924854:5848216")
+	runtimeOnly fg.deobf("curse.maven:mowzies-mobs-250498:6159423")
+	runtimeOnly fg.deobf("curse.maven:ob-aquamirae-536254:4616373")
+	runtimeOnly fg.deobf("curse.maven:obscure-api-638417:4616364")
+	runtimeOnly fg.deobf("curse.maven:irons-spells-n-spellbooks-855414:6054196")
+	runtimeOnly fg.deobf("curse.maven:playeranimator-658587:4587214")
+	runtimeOnly fg.deobf("curse.maven:caelus-308989:5281700")
+	runtimeOnly fg.deobf("curse.maven:gathering-torches-become-sunlight-1115278:6136583")
+	runtimeOnly fg.deobf("curse.maven:mutant-monsters-852665:5107399")
+	runtimeOnly fg.deobf("curse.maven:puzzles-lib-495476:5904750")
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

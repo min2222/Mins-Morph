@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
 import com.min01.morph.capabilities.MorphCapabilities;
-import com.min01.morph.capabilities.MorphImpl;
+import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.util.MorphUtil;
@@ -48,7 +48,7 @@ public class MorphCommand
 			MorphSavedData data = MorphSavedData.get(player.level);
         	if(data != null)
         	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
         		if(cap.getMorph() != null)
         		{
             		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
@@ -65,7 +65,7 @@ public class MorphCommand
 			MorphSavedData data = MorphSavedData.get(player.level);
         	if(data != null)
         	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
         		if(cap.getMorph() != null)
         		{
             		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
@@ -82,7 +82,7 @@ public class MorphCommand
 			MorphSavedData data = MorphSavedData.get(player.level);
         	if(data != null)
         	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
         		if(cap.getMorph() != null)
         		{
             		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);

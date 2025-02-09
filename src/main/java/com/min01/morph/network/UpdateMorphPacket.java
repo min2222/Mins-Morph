@@ -4,14 +4,13 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.min01.morph.capabilities.MorphCapabilities;
-import com.min01.morph.util.MorphClientUtil;
 import com.min01.morph.util.MorphUtil;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.common.util.LogicalSidedProvider;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -54,28 +53,24 @@ public class UpdateMorphPacket
 			{
 				if(ctx.get().getDirection().getReceptionSide().isClient())
 				{
-					DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> new Runnable() 
+					LogicalSidedProvider.CLIENTWORLD.get(ctx.get().getDirection().getReceptionSide()).filter(ClientLevel.class::isInstance).ifPresent(level -> 
 					{
-						@Override
-						public void run() 
+						LivingEntity entity = (LivingEntity) MorphUtil.getEntityByUUID(level, message.entityUUID);
+						if(entity != null)
 						{
-							LivingEntity entity = (LivingEntity) MorphUtil.getEntityByUUID(MorphClientUtil.MC.level, message.entityUUID);
-							if(entity != null)
+							entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
 							{
-								entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+								if(!message.reset)
 								{
-									if(!message.reset)
-									{
-										LivingEntity living = (LivingEntity) message.type.create(MorphClientUtil.MC.level);
-										living.setId(message.entityId);
-										t.setMorph(living);
-									}
-									else
-									{
-										MorphUtil.removeMorph(entity);
-									}
-								});
-							}
+									LivingEntity living = (LivingEntity) message.type.create(level);
+									living.setId(message.entityId);
+									t.setMorph(living);
+								}
+								else
+								{
+									MorphUtil.removeMorph(entity);
+								}
+							});
 						}
 					});
 				}

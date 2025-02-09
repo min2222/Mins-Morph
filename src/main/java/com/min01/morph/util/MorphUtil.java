@@ -23,7 +23,7 @@ import org.objectweb.asm.tree.MethodNode;
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
 import com.min01.morph.capabilities.MorphCapabilities;
-import com.min01.morph.capabilities.MorphImpl;
+import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
 
@@ -98,7 +98,7 @@ public class MorphUtil
 	
 	public static boolean hasMorph(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
 		return cap.getMorph() != null;	
 	}
 	
@@ -200,7 +200,7 @@ public class MorphUtil
 		try
 		{
 			Field f = mob.getClass().getDeclaredField(animationName);
-			Method m = mob.getClass().getSuperclass().getMethod("sendAbilityMessage", f.getType());
+			Method m = mob.getClass().getMethod("sendAbilityMessage", f.getType());
 			f.setAccessible(true);
 			m.invoke(mob, f.get(mob));
 		}
@@ -209,14 +209,13 @@ public class MorphUtil
 			
 		}
 		//Aquamirae
-		//TODO
+		//TODO proper tick input, trigger without goal name;
 		try
 		{
-			Field f = mob.getClass().getDeclaredField("ANIMATIONS");
+			Field f = mob.getClass().getDeclaredField(animationName);
 			f.setAccessible(true);
-			Object obj = f.get(mob);
-			Method m = obj.getClass().getMethod("play", String.class, int.class);
-			m.invoke(obj, animationName, 52);
+			Method m = f.getType().getMethod("play", Entity.class, int.class);
+			m.invoke(f.get(mob), mob, 100);
 		}
 		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException | InvocationTargetException e)
 		{
