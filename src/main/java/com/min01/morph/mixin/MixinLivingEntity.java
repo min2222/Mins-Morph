@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.min01.morph.capabilities.IMorphCapability;
 import com.min01.morph.capabilities.MorphCapabilities;
+import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.core.Holder;
@@ -24,10 +25,13 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.extensions.IForgeLivingEntity;
+import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 @Mixin(LivingEntity.class)
-public class MixinLivingEntity
+public abstract class MixinLivingEntity implements IForgeLivingEntity
 {
 	@Inject(at = @At(value = "HEAD"), method = "tick", cancellable = true)
 	private void tick(CallbackInfo ci)
@@ -239,5 +243,25 @@ public class MixinLivingEntity
 		{
 			((LivingEntity) MorphUtil.getMorphOwner(Entity.class.cast(this))).randomTeleport(x, y, z, flag);
 		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Override
+	public boolean canDrownInFluidType(FluidType type)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		if(living.getCapability(MorphCapabilities.MORPH).isPresent())
+		{
+			IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+			if(MorphUtil.hasMorph(living))
+			{
+				return cap.getMorph().canDrownInFluidType(type);
+			}
+		}
+        if(type == ForgeMod.WATER_TYPE.get())
+        {
+        	return !this.self().canBreatheUnderwater();
+        }
+        return type.canDrownIn(this.self());
 	}
 }

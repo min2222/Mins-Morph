@@ -20,6 +20,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -96,9 +98,10 @@ public class MorphCapabilityImpl implements IMorphCapability
 			this.morph.tick();
 			if(this.entity instanceof Player player)
 			{
-				if(!player.getAbilities().instabuild)
+				if(((Mob) this.morph).getMoveControl() instanceof FlyingMoveControl || ((Mob) this.morph).getNavigation() instanceof FlyingPathNavigation)
 				{
-					player.getAbilities().mayfly = this.morph.isNoGravity();
+					player.getAbilities().mayfly = true;
+					player.setNoGravity(this.morph.isNoGravity());
 					player.onUpdateAbilities();
 				}
 			}

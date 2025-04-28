@@ -123,7 +123,10 @@ public class MorphCommand
 		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("data").then(Commands.argument("dataName", StringArgumentType.string()).suggests(DATAS).then(Commands.argument("dataValue", StringArgumentType.string()).executes(commandCtx -> 
 		{
 			return setData(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "dataName"), StringArgumentType.getString(commandCtx, "dataValue"));
-		}))))));
+		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("reset").executes((commandCtx) -> 
+		{
+			return unmorph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"));
+		}))));
 	}
 	
 	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName)
@@ -226,6 +229,7 @@ public class MorphCommand
 				{
 					t.setPersistent(isPersistent);
 					t.setMorph(living);
+					player.setHealth(living.getMaxHealth());
 					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + player.getDisplayName().getString() + " to " + living.getDisplayName().getString()), true);
 				}
 				else
@@ -233,6 +237,23 @@ public class MorphCommand
 					sourceStack.sendFailure(Component.literal("Can't morph to none living entity"));
 				}
 			});
+		}
+		return players.size();
+	}
+	
+	private static int unmorph(CommandSourceStack sourceStack, Collection<ServerPlayer> players)
+	{
+		for(ServerPlayer player : players)
+		{
+			if(MorphUtil.hasMorph(player))
+			{
+				MorphUtil.removeMorph(player);
+				sourceStack.sendSuccess(() -> Component.literal("Removed morph of " + player.getDisplayName().getString()), true);
+			}
+			else
+			{
+				sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+			}
 		}
 		return players.size();
 	}

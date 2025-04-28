@@ -37,6 +37,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.LevelEntityGetter;
@@ -99,7 +100,7 @@ public class MorphUtil
 	public static boolean hasMorph(LivingEntity living)
 	{
 		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-		return cap.getMorph() != null;	
+		return cap.getMorph() != null;
 	}
 	
 	public static void removeMorph(LivingEntity living)
@@ -110,6 +111,12 @@ public class MorphUtil
 			t.setType(null);
 			t.setPersistent(false);
 			living.refreshDimensions();
+			if(living instanceof Player player)
+			{
+				player.getAbilities().mayfly = false;
+				player.setNoGravity(false);
+				player.onUpdateAbilities();
+			}
 		});
 	}
     
