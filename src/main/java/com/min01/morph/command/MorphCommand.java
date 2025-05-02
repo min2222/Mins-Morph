@@ -30,6 +30,7 @@ import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -43,51 +44,63 @@ public class MorphCommand
 {
 	public static final SuggestionProvider<CommandSourceStack> DATAS = SuggestionProviders.register(new ResourceLocation("datas"), (p_258164_, p_258165_) -> 
 	{
-		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+		if(server != null)
 		{
-			MorphSavedData data = MorphSavedData.get(player.level);
-        	if(data != null)
-        	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-        		if(cap.getMorph() != null)
-        		{
-            		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
-        		}
-        	}
+			for(ServerPlayer player : server.getPlayerList().getPlayers())
+			{
+				MorphSavedData data = MorphSavedData.get(player.level);
+	        	if(data != null)
+	        	{
+	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        		if(cap.getMorph() != null)
+	        		{
+	            		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+	        		}
+	        	}
+			}
 		}
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
 	public static final SuggestionProvider<CommandSourceStack> GOALS = SuggestionProviders.register(new ResourceLocation("goals"), (p_258164_, p_258165_) -> 
 	{
-		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+		if(server != null)
 		{
-			MorphSavedData data = MorphSavedData.get(player.level);
-        	if(data != null)
-        	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-        		if(cap.getMorph() != null)
-        		{
-            		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
-        		}
-        	}
+			for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+			{
+				MorphSavedData data = MorphSavedData.get(player.level);
+	        	if(data != null)
+	        	{
+	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        		if(cap.getMorph() != null)
+	        		{
+	            		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+	        		}
+	        	}
+			}
 		}
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
 	public static final SuggestionProvider<CommandSourceStack> ANIMATIONS = SuggestionProviders.register(new ResourceLocation("animations"), (p_258164_, p_258165_) -> 
 	{
-		for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+		if(server != null)
 		{
-			MorphSavedData data = MorphSavedData.get(player.level);
-        	if(data != null)
-        	{
-        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-        		if(cap.getMorph() != null)
-        		{
-            		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
-        		}
-        	}
+			for(ServerPlayer player : server.getPlayerList().getPlayers())
+			{
+				MorphSavedData data = MorphSavedData.get(player.level);
+	        	if(data != null)
+	        	{
+	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        		if(cap.getMorph() != null)
+	        		{
+	            		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+	        		}
+	        	}
+			}
 		}
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
