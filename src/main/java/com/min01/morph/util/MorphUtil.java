@@ -113,6 +113,7 @@ public class MorphUtil
 			living.refreshDimensions();
 			if(living instanceof Player player)
 			{
+				player.heal(player.getMaxHealth());
 				player.getAbilities().mayfly = false;
 				player.setNoGravity(false);
 				player.onUpdateAbilities();

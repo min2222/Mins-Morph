@@ -99,7 +99,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			if(MorphUtil.ATTRIBUTES.contains(holder.value()))
+			if(MorphUtil.ATTRIBUTES.contains(holder.value()) && t.getAttribute(holder.value()) != null)
 			{
     			cir.setReturnValue(t.getAttributeBaseValue(holder.value()));
 			}
@@ -112,7 +112,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			if(MorphUtil.ATTRIBUTES.contains(attribute))
+			if(MorphUtil.ATTRIBUTES.contains(attribute) && t.getAttribute(attribute) != null)
 			{
     			cir.setReturnValue(t.getAttributeBaseValue(attribute));
 			}
