@@ -98,11 +98,14 @@ public class MorphCapabilityImpl implements IMorphCapability
 			this.morph.tick();
 			if(this.entity instanceof Player player)
 			{
-				if(((Mob) this.morph).getMoveControl() instanceof FlyingMoveControl || ((Mob) this.morph).getNavigation() instanceof FlyingPathNavigation)
+				if(!player.getAbilities().instabuild)
 				{
-					player.getAbilities().mayfly = true;
-					player.setNoGravity(this.morph.isNoGravity());
-					player.onUpdateAbilities();
+					if(((Mob) this.morph).getMoveControl() instanceof FlyingMoveControl || ((Mob) this.morph).getNavigation() instanceof FlyingPathNavigation)
+					{
+						player.getAbilities().mayfly = true;
+						player.setNoGravity(this.morph.isNoGravity());
+						player.onUpdateAbilities();
+					}
 				}
 			}
 			if(!this.entity.level.isClientSide)

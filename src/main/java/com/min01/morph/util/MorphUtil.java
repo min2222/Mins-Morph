@@ -107,16 +107,23 @@ public class MorphUtil
 	{
 		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
 		{
-			t.setMorph(null);
-			t.setType(null);
-			t.setPersistent(false);
-			living.refreshDimensions();
-			if(living instanceof Player player)
+			if(hasMorph(living))
 			{
-				player.heal(player.getMaxHealth());
-				player.getAbilities().mayfly = false;
-				player.setNoGravity(false);
-				player.onUpdateAbilities();
+				if(living instanceof Player player)
+				{
+					player.heal(player.getMaxHealth());
+					if(!player.getAbilities().instabuild)
+					{
+						player.getAbilities().flying = false;
+						player.getAbilities().mayfly = false;
+						player.setNoGravity(false);
+						player.onUpdateAbilities();
+					}
+				}
+				t.setMorph(null);
+				t.setType(null);
+				t.setPersistent(false);
+				living.refreshDimensions();
 			}
 		});
 	}
