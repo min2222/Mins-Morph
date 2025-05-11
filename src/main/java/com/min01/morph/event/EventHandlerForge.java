@@ -9,13 +9,16 @@ import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
+import net.minecraftforge.event.entity.living.LivingConversionEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
@@ -31,6 +34,46 @@ public class EventHandlerForge
     public static void onRegisterCommands(RegisterCommandsEvent event)
     {
     	MorphCommand.register(event.getDispatcher(), event.getBuildContext());
+    }
+    
+    @SubscribeEvent
+    public static void onEntityTravelToDimension(EntityTravelToDimensionEvent event)
+    {
+    	Entity entity = event.getEntity();
+		if(MorphUtil.isMorph(entity))
+		{
+			Entity owner = MorphUtil.getMorphOwner(entity);
+			if(owner != null)
+			{
+				MorphUtil.setChangedDimension((LivingEntity) owner, true);
+			}
+			event.setCanceled(true);
+			entity.remove(RemovalReason.CHANGED_DIMENSION);
+		}
+    }
+    
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event)
+    {
+    	Player player = event.getEntity();
+    	if(MorphUtil.isChangedDimension(player))
+    	{
+			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			{
+				t.setMorph((LivingEntity) t.getType().create(player.level));
+			});
+    		MorphUtil.setChangedDimension(player, false);
+    	}
+    }
+    
+    @SubscribeEvent
+    public static void onLivingConversion(LivingConversionEvent.Pre event)
+    {
+    	if(MorphUtil.isMorph(event.getEntity()))
+    	{
+    		event.setConversionTimer(0);
+    		event.setCanceled(true);
+    	}
     }
     
     @SubscribeEvent

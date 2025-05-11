@@ -20,8 +20,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.monster.hoglin.Hoglin;
+import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -35,6 +38,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 	private LivingEntity target;
 	private EntityType<?> type;
 	private boolean isPersistent;
+	private boolean changedDimension;
 	private List<Map<String, String>> dataList = new ArrayList<>();
 	
 	@Override
@@ -59,6 +63,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 			nbt.putString("MorphType", ForgeRegistries.ENTITY_TYPES.getKey(this.type).toString());
 		}
 		nbt.putBoolean("isPersistent", this.isPersistent);
+		nbt.putBoolean("ChangedDimension", this.changedDimension);
 		nbt.put("MobDatas", datas);
 		return nbt;
 	}
@@ -81,6 +86,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 			this.dataList.add(map);
 		}
 		this.isPersistent = nbt.getBoolean("isPersistent");
+		this.changedDimension = nbt.getBoolean("ChangedDimension");
 	}
 
 	@Override
@@ -96,6 +102,14 @@ public class MorphCapabilityImpl implements IMorphCapability
 		{
 			MorphUtil.tick(this.entity, this.morph);
 			this.morph.tick();
+			if(this.morph instanceof AbstractPiglin piglin)
+			{
+				piglin.setImmuneToZombification(true);
+			}
+			if(this.morph instanceof Hoglin hoglin)
+			{
+				hoglin.setImmuneToZombification(true);
+			}
 			if(this.entity instanceof Player player)
 			{
 				if(!player.getAbilities().instabuild)
@@ -118,7 +132,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 					this.entity.level.addFreshEntity(target);
 					this.target = target;
 				}
-				if(!this.morph.isAlive() && !this.isPersistent)
+				if(!this.morph.isAlive() && !this.morph.getRemovalReason().equals(RemovalReason.CHANGED_DIMENSION) && !this.isPersistent)
 				{
 					MorphUtil.removeMorph(this.entity);
 				}
@@ -222,6 +236,18 @@ public class MorphCapabilityImpl implements IMorphCapability
 		Map<String, String> map = new HashMap<>();
 		map.put(dataName, dataValue);
 		this.dataList.add(map);
+	}
+	
+	@Override
+	public void setChangedDimension(boolean isChangedDimension)
+	{
+		this.changedDimension = true;
+	}
+	
+	@Override
+	public boolean isChangedDimension() 
+	{
+		return this.changedDimension;
 	}
 	
 	public void sendUpdataPacket()

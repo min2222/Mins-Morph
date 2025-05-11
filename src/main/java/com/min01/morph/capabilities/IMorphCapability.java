@@ -33,4 +33,8 @@ public interface IMorphCapability extends INBTSerializable<CompoundTag>
 	LivingEntity getFakeTarget();
 	
 	void setData(LivingEntity living, String dataName, String dataValue);
+	
+	void setChangedDimension(boolean isChangedDimension);
+	
+	boolean isChangedDimension();
 }

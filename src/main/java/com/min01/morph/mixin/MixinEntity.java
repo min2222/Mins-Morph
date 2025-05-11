@@ -34,6 +34,15 @@ public class MixinEntity
 		});
 	}
 	
+	@Inject(at = @At(value = "HEAD"), method = "getAirSupply", cancellable = true)
+	private void getAirSupply(CallbackInfoReturnable<Integer> cir)
+	{
+		MorphUtil.getMorph(Entity.class.cast(this), t -> 
+		{
+			cir.setReturnValue(t.getAirSupply());
+		});
+	}
+	
 	@Inject(at = @At(value = "HEAD"), method = "setSecondsOnFire", cancellable = true)
 	private void setSecondsOnFire(int second, CallbackInfo ci)
 	{

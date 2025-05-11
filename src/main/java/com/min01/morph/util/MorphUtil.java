@@ -97,6 +97,24 @@ public class MorphUtil
 		return entity.getId() < 0;
 	}
 	
+	public static void setChangedDimension(LivingEntity living, boolean value)
+	{
+		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		cap.setChangedDimension(value);;
+	}
+	
+	public static boolean isChangedDimension(LivingEntity living)
+	{
+		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		return cap.isChangedDimension();
+	}
+	
+	public static boolean isPersistent(LivingEntity living)
+	{
+		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		return cap.isPersistent();
+	}
+	
 	public static boolean hasMorph(LivingEntity living)
 	{
 		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
@@ -111,7 +129,6 @@ public class MorphUtil
 			{
 				if(living instanceof Player player)
 				{
-					player.heal(player.getMaxHealth());
 					if(!player.getAbilities().instabuild)
 					{
 						player.getAbilities().flying = false;
@@ -123,6 +140,7 @@ public class MorphUtil
 				t.setMorph(null);
 				t.setType(null);
 				t.setPersistent(false);
+				living.heal(living.getMaxHealth());
 				living.refreshDimensions();
 			}
 		});
@@ -380,7 +398,7 @@ public class MorphUtil
     {
     	morph.getPersistentData().putUUID("MorphOwnerUUID", player.getUUID());
     	player.eyeHeight = morph.getEyeHeight();
-    	//player.dimensions = morph.dimensions;
+    	player.dimensions = morph.dimensions;
 		if(!player.isAlive())
 		{
 			morph.discard();
