@@ -27,7 +27,7 @@ public class MixinEntity
 		}
 		MorphUtil.getMorph(Entity.class.cast(this), t -> 
 		{
-			if(t.isAlliedTo(Entity.class.cast(this)) || Entity.class.cast(this).isAlliedTo(t))
+			if(t.isAlliedTo(Entity.class.cast(this)))
 			{
     			cir.setReturnValue(true);
 			}

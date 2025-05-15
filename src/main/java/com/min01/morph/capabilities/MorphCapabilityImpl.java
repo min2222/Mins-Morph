@@ -16,11 +16,11 @@ import com.min01.morph.util.world.MorphSavedData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
@@ -124,8 +124,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 			}
 			if(!this.entity.level.isClientSide)
 			{
-				boolean flag = this.target != null && !this.target.isAlive();
-				if(this.target == null || flag)
+				if(this.target == null || !this.target.isAlive())
 				{
 					EntityFakeTarget target = new EntityFakeTarget(MorphEntities.FAKE_TARGET.get(), this.entity.level);
 					target.setOwner(this.entity);
