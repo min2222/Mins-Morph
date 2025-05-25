@@ -210,6 +210,29 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			cir.setReturnValue(t.canBeAffected(effect));
 		});
 	}
+
+	@Inject(at = @At(value = "HEAD"), method = "isSensitiveToWater", cancellable = true)
+	private void isSensitiveToWater(CallbackInfoReturnable<Boolean> cir) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			cir.setReturnValue(t.isSensitiveToWater());
+		});
+	}
+
+	@Inject(at = @At(value = "HEAD"), method = "doPush", cancellable = true)
+	protected void doPush(Entity entity, CallbackInfo ci) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		if(MorphUtil.getMorphOwner(living) != null)
+		{
+			if(entity == MorphUtil.getMorphOwner(living))
+			{
+				ci.cancel();
+			}
+		}
+	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z", cancellable = true)
 	private void addEffect(MobEffectInstance effect, @Nullable Entity entity, CallbackInfoReturnable<Boolean> cir)
