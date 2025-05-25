@@ -2,6 +2,7 @@ package com.min01.morph.command;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -47,15 +48,19 @@ public class MorphCommand
 		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
 		if(server != null)
 		{
-			for(ServerPlayer player : server.getPlayerList().getPlayers())
+			List<ServerPlayer> players = server.getPlayerList().getPlayers().stream().filter(t -> MorphUtil.hasMorph(t)).toList();
+			for(ServerPlayer player : players)
 			{
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-	        		if(cap.getMorph() != null)
+	        		for(Entry<String, List<String>> entry : data.getDataMap().entrySet())
 	        		{
-	            		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+		        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        			if(cap.getMorph().getClass().getSimpleName().equals(entry.getKey()))
+	        			{
+	                		return SharedSuggestionProvider.suggest(entry.getValue().stream(), p_258165_);
+	        			}
 	        		}
 	        	}
 			}
@@ -68,15 +73,19 @@ public class MorphCommand
 		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
 		if(server != null)
 		{
-			for(ServerPlayer player : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+			List<ServerPlayer> players = server.getPlayerList().getPlayers().stream().filter(t -> MorphUtil.hasMorph(t)).toList();
+			for(ServerPlayer player : players)
 			{
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-	        		if(cap.getMorph() != null)
+	        		for(Entry<String, List<String>> entry : data.getGoalMap().entrySet())
 	        		{
-	            		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+		        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        			if(cap.getMorph().getClass().getSimpleName().equals(entry.getKey()))
+	        			{
+	                		return SharedSuggestionProvider.suggest(entry.getValue().stream(), p_258165_);
+	        			}
 	        		}
 	        	}
 			}
@@ -89,15 +98,19 @@ public class MorphCommand
 		MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
 		if(server != null)
 		{
-			for(ServerPlayer player : server.getPlayerList().getPlayers())
+			List<ServerPlayer> players = server.getPlayerList().getPlayers().stream().filter(t -> MorphUtil.hasMorph(t)).toList();
+			for(ServerPlayer player : players)
 			{
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-	        		if(cap.getMorph() != null)
+	        		for(Entry<String, List<String>> entry : data.getAnimationMap().entrySet())
 	        		{
-	            		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()).stream(), p_258165_);
+		        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        			if(cap.getMorph().getClass().getSimpleName().equals(entry.getKey()))
+	        			{
+	                		return SharedSuggestionProvider.suggest(entry.getValue().stream(), p_258165_);
+	        			}
 	        		}
 	        	}
 			}

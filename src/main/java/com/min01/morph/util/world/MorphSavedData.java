@@ -154,6 +154,21 @@ public class MorphSavedData extends SavedData
 	{
 		return this.animationMap.get(mobName);
 	}
+	
+	public Map<String, List<String>> getDataMap()
+	{
+		return this.dataMap;
+	}
+	
+	public Map<String, List<String>> getGoalMap()
+	{
+		return this.goalMap;
+	}
+	
+	public Map<String, List<String>> getAnimationMap()
+	{
+		return this.animationMap;
+	}
 
 	public void saveAnimation(String mobName, List<String> animations)
 	{
