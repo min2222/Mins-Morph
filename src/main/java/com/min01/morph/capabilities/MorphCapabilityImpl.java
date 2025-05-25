@@ -175,6 +175,18 @@ public class MorphCapabilityImpl implements IMorphCapability
 			MorphUtil.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
 		}
 		this.morph = morph;
+		if(this.entity instanceof Player player)
+		{
+			if(!player.getAbilities().instabuild)
+			{
+				if(!(((Mob) this.morph).getMoveControl() instanceof FlyingMoveControl) && !(((Mob) this.morph).getNavigation() instanceof FlyingPathNavigation))
+				{
+					player.getAbilities().mayfly = false;
+					player.setNoGravity(false);
+					player.onUpdateAbilities();
+				}
+			}
+		}
 		this.sendUpdataPacket();
 	}
 	

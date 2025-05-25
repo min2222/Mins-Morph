@@ -32,11 +32,12 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
@@ -244,6 +245,7 @@ public class MorphCommand
 		return players.size();
 	}
 	
+	@SuppressWarnings("deprecation")
 	private static int morph(CommandSourceStack sourceStack, Collection<ServerPlayer> players, Reference<EntityType<?>> entityType, boolean isPersistent)
 	{
 		for(ServerPlayer player : players)
@@ -251,12 +253,13 @@ public class MorphCommand
 			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
 			{
 				Entity entity = entityType.get().create(player.level);
-				if(entity instanceof LivingEntity living)
+				if(entity instanceof Mob mob)
 				{
+					mob.finalizeSpawn((ServerLevel) player.level, player.level.getCurrentDifficultyAt(player.blockPosition()), MobSpawnType.COMMAND, null, null);
 					t.setPersistent(isPersistent);
-					t.setMorph(living);
-					player.setHealth(living.getMaxHealth());
-					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + player.getDisplayName().getString() + " to " + living.getDisplayName().getString()), true);
+					t.setMorph(mob);
+					player.setHealth(mob.getMaxHealth());
+					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + player.getDisplayName().getString() + " to " + mob.getDisplayName().getString()), true);
 				}
 				else
 				{

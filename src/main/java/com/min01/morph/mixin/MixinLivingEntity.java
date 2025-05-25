@@ -44,6 +44,16 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		}
 	}
 	
+	@Inject(at = @At(value = "HEAD"), method = "getMaxHealth", cancellable = true)
+	private void getMaxHealth(CallbackInfoReturnable<Float> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			cir.setReturnValue(t.getMaxHealth());
+		});
+	}
+	
 	@Inject(at = @At(value = "HEAD"), method = "getHealth", cancellable = true)
 	private void getHealth(CallbackInfoReturnable<Float> cir)
 	{
@@ -53,7 +63,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			cir.setReturnValue(((LivingEntity) MorphUtil.getMorphOwner(living)).getHealth());
 		}
 	}
-
+	
 	@Inject(at = @At(value = "HEAD"), method = "getAttribute", cancellable = true)
 	private void getAttribute(Attribute attribute, CallbackInfoReturnable<AttributeInstance> cir)
 	{
@@ -63,32 +73,6 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			if(MorphUtil.ATTRIBUTES.contains(attribute) && t.getAttribute(attribute) != null)
 			{
     			cir.setReturnValue(t.getAttribute(attribute));
-			}
-		});
-	}
-
-	@Inject(at = @At(value = "HEAD"), method = "getAttributeValue(Lnet/minecraft/core/Holder;)D", cancellable = true)
-	private void getAttributeValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir) 
-	{
-		LivingEntity living = LivingEntity.class.cast(this);
-		MorphUtil.getMorph(living, t -> 
-		{
-			if(MorphUtil.ATTRIBUTES.contains(holder.value()) && t.getAttribute(holder.value()) != null)
-			{
-    			cir.setReturnValue(t.getAttributeValue(holder.value()));
-			}
-		});
-	}
-
-	@Inject(at = @At(value = "HEAD"), method = "getAttributeValue(Lnet/minecraft/world/entity/ai/attributes/Attribute;)D", cancellable = true)
-	private void getAttributeValue(Attribute attribute, CallbackInfoReturnable<Double> cir)
-	{
-		LivingEntity living = LivingEntity.class.cast(this);
-		MorphUtil.getMorph(living, t -> 
-		{
-			if(MorphUtil.ATTRIBUTES.contains(attribute) && t.getAttribute(attribute) != null)
-			{
-    			cir.setReturnValue(t.getAttributeValue(attribute));
 			}
 		});
 	}
@@ -176,13 +160,13 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		}
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "getArmorValue", cancellable = true)
+	@Inject(at = @At(value = "RETURN"), method = "getArmorValue", cancellable = true)
 	private void getArmorValue(CallbackInfoReturnable<Integer> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			cir.setReturnValue(t.getArmorValue());
+			cir.setReturnValue(cir.getReturnValue() + t.getArmorValue());
 		});
 	}
 	

@@ -1,6 +1,7 @@
 package com.min01.morph.event;
 
 import com.min01.morph.MinsMorph;
+import com.min01.morph.config.MorphConfig;
 import com.min01.morph.util.MorphClientUtil;
 import com.min01.morph.util.MorphUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -31,7 +32,7 @@ public class ClientEventHandlerForge
     	Player player = MorphClientUtil.MC.player;
     	MorphUtil.getMorph(player, t -> 
     	{
-        	if(event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type() && !player.getAbilities().instabuild && !player.isSpectator())
+        	if(event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type() && !player.getAbilities().instabuild && !player.isSpectator() && t.getMaxHealth() >= MorphConfig.healthThreshold.get())
         	{
         		GuiGraphics guiGraphics = event.getGuiGraphics();
         		Component component = Component.literal(t.getHealth() + " / " + t.getMaxHealth());
