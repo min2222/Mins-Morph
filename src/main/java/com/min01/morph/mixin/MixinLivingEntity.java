@@ -77,6 +77,32 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		});
 	}
 
+	@Inject(at = @At(value = "RETURN"), method = "getAttributeValue(Lnet/minecraft/core/Holder;)D", cancellable = true)
+	private void getAttributeValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			if(MorphUtil.ATTRIBUTES.contains(holder.value()) && t.getAttribute(holder.value()) != null)
+			{
+    			cir.setReturnValue(cir.getReturnValue() + t.getAttributeValue(holder.value()));
+			}
+		});
+	}
+
+	@Inject(at = @At(value = "RETURN"), method = "getAttributeValue(Lnet/minecraft/world/entity/ai/attributes/Attribute;)D", cancellable = true)
+	private void getAttributeValue(Attribute attribute, CallbackInfoReturnable<Double> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			if(MorphUtil.ATTRIBUTES.contains(attribute) && t.getAttribute(attribute) != null)
+			{
+    			cir.setReturnValue(cir.getReturnValue() + t.getAttributeValue(attribute));
+			}
+		});
+	}
+
 	@Inject(at = @At(value = "HEAD"), method = "getAttributeBaseValue(Lnet/minecraft/core/Holder;)D", cancellable = true)
 	private void getAttributeBaseValue(Holder<Attribute> holder, CallbackInfoReturnable<Double> cir)
 	{
@@ -158,16 +184,6 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		{
 			ci.cancel();
 		}
-	}
-	
-	@Inject(at = @At(value = "RETURN"), method = "getArmorValue", cancellable = true)
-	private void getArmorValue(CallbackInfoReturnable<Integer> cir)
-	{
-		LivingEntity living = LivingEntity.class.cast(this);
-		MorphUtil.getMorph(living, t -> 
-		{
-			cir.setReturnValue(cir.getReturnValue() + t.getArmorValue());
-		});
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "hurt", cancellable = true)
