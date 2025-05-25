@@ -116,9 +116,12 @@ public class MorphCapabilityImpl implements IMorphCapability
 				{
 					if(((Mob) this.morph).getMoveControl() instanceof FlyingMoveControl || ((Mob) this.morph).getNavigation() instanceof FlyingPathNavigation)
 					{
-						player.getAbilities().mayfly = true;
-						player.setNoGravity(this.morph.isNoGravity());
-						player.onUpdateAbilities();
+						if(!player.getAbilities().mayfly)
+						{
+							player.getAbilities().mayfly = true;
+							player.setNoGravity(this.morph.isNoGravity());
+							player.onUpdateAbilities();
+						}
 					}
 				}
 			}
@@ -173,18 +176,6 @@ public class MorphCapabilityImpl implements IMorphCapability
 			this.setup((Mob) morph);
 			MorphUtil.ENTITY_MAP.put(morph.getClass().hashCode(), morph);
 			MorphUtil.ENTITY_MAP2.put(morph.getClass().getSuperclass().hashCode(), morph);
-			if(this.entity instanceof Player player)
-			{
-				if(!player.getAbilities().instabuild)
-				{
-					if(!(((Mob) morph).getMoveControl() instanceof FlyingMoveControl) && !(((Mob) morph).getNavigation() instanceof FlyingPathNavigation))
-					{
-						player.getAbilities().mayfly = false;
-						player.setNoGravity(false);
-						player.onUpdateAbilities();
-					}
-				}
-			}
 		}
 		this.morph = morph;
 		this.sendUpdataPacket();

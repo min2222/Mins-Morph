@@ -17,7 +17,6 @@ import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -182,11 +181,6 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 				{
 					cir.setReturnValue(false);
 				}
-			}
-			boolean flag = t.hurt(source, damage);
-			if(!flag && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
-			{
-				cir.setReturnValue(false);
 			}
 		});
 	}
