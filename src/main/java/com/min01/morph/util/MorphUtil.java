@@ -100,7 +100,7 @@ public class MorphUtil
 	public static void setChangedDimension(LivingEntity living, boolean value)
 	{
 		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
-		cap.setChangedDimension(value);;
+		cap.setChangedDimension(value);
 	}
 	
 	public static boolean isChangedDimension(LivingEntity living)

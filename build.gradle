@@ -185,6 +185,7 @@ dependencies {
 	runtimeOnly fg.deobf("curse.maven:gathering-torches-become-sunlight-1115278:6136583")
 	runtimeOnly fg.deobf("curse.maven:mutant-monsters-852665:5107399")
 	runtimeOnly fg.deobf("curse.maven:puzzles-lib-495476:5904750")
+	runtimeOnly fg.deobf("curse.maven:alexs-mobs-426558:5698791")
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

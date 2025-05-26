@@ -1,7 +1,5 @@
 package com.min01.morph.mixin;
 
-import java.lang.reflect.Method;
-
 import javax.annotation.Nullable;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,18 +14,15 @@ import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.core.Holder;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.extensions.IForgeLivingEntity;
 import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 @Mixin(LivingEntity.class)
 public abstract class MixinLivingEntity implements IForgeLivingEntity
@@ -41,6 +36,16 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		{
 			living.discard();
 		}
+	}
+	
+	@Inject(at = @At(value = "HEAD"), method = "onClimbable", cancellable = true)
+	private void onClimbable(CallbackInfoReturnable<Boolean> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			cir.setReturnValue(t.onClimbable());
+		});
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "getMaxHealth", cancellable = true)
@@ -137,44 +142,6 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			cir.setReturnValue(t.isInvertedHealAndHarm());
 		});
 	}
-
-	@Inject(at = @At(value = "HEAD"), method = "getHurtSound", cancellable = true)
-	private void getHurtSound(DamageSource source, CallbackInfoReturnable<SoundEvent> cir) 
-	{
-		LivingEntity living = LivingEntity.class.cast(this);
-		MorphUtil.getMorph(living, t -> 
-		{
-			Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_7975_", DamageSource.class);
-			try
-			{
-				SoundEvent sound = (SoundEvent) m.invoke(t, source);
-				cir.setReturnValue(sound);
-			}
-			catch (Exception e)
-			{
-				
-			}
-		});
-	}
-
-	@Inject(at = @At(value = "HEAD"), method = "getDeathSound", cancellable = true)
-	private void getDeathSound(CallbackInfoReturnable<SoundEvent> cir) 
-	{
-		LivingEntity living = LivingEntity.class.cast(this);
-		MorphUtil.getMorph(living, t -> 
-		{
-			Method m = ObfuscationReflectionHelper.findMethod(Mob.class, "m_5592_");
-			try
-			{
-				SoundEvent sound = (SoundEvent) m.invoke(t);
-				cir.setReturnValue(sound);
-			}
-			catch (Exception e)
-			{
-				
-			}
-		});
-	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "updateWalkAnimation", cancellable = true)
 	private void updateWalkAnimation(float p_268283_, CallbackInfo ci)
@@ -185,18 +152,15 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		}
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "hurt", cancellable = true)
+	@Inject(at = @At(value = "RETURN"), method = "hurt", cancellable = true)
 	private void hurt(DamageSource source, float damage, CallbackInfoReturnable<Boolean> cir)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			if(source.getEntity() != null)
+			if(cir.getReturnValue())
 			{
-				if(source.getEntity() == t)
-				{
-					cir.setReturnValue(false);
-				}
+				cir.setReturnValue(t.hurt(source, damage));
 			}
 		});
 	}

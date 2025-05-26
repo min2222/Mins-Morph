@@ -22,7 +22,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.player.Player;
@@ -112,9 +114,11 @@ public class MorphCapabilityImpl implements IMorphCapability
 			}
 			if(this.entity instanceof Player player)
 			{
-				if(!player.getAbilities().instabuild)
+				if(!player.getAbilities().instabuild && !player.isSpectator())
 				{
-					if(((Mob) this.morph).getMoveControl() instanceof FlyingMoveControl || ((Mob) this.morph).getNavigation() instanceof FlyingPathNavigation)
+					MoveControl control = ((Mob) this.morph).getMoveControl();
+					PathNavigation navigation = ((Mob) this.morph).getNavigation();
+					if(control instanceof FlyingMoveControl || navigation instanceof FlyingPathNavigation || control.getClass().getSimpleName().contains("Flight") || navigation.getClass().getSimpleName().contains("Flight"))
 					{
 						if(!player.getAbilities().mayfly)
 						{
@@ -122,6 +126,13 @@ public class MorphCapabilityImpl implements IMorphCapability
 							player.setNoGravity(this.morph.isNoGravity());
 							player.onUpdateAbilities();
 						}
+					}
+					else if(player.getAbilities().mayfly)
+					{
+						player.getAbilities().flying = false;
+						player.getAbilities().mayfly = false;
+						player.setNoGravity(false);
+						player.onUpdateAbilities();
 					}
 				}
 			}

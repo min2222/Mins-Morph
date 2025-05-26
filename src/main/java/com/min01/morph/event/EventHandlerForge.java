@@ -19,6 +19,7 @@ import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
 import net.minecraftforge.event.entity.living.LivingConversionEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
@@ -34,6 +35,15 @@ public class EventHandlerForge
     public static void onRegisterCommands(RegisterCommandsEvent event)
     {
     	MorphCommand.register(event.getDispatcher(), event.getBuildContext());
+    }
+    
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event)
+    {
+    	MorphUtil.getMorph(event.getEntity(), t -> 
+    	{
+    		t.doHurtTarget(event.getTarget());
+    	});
     }
     
     @SubscribeEvent

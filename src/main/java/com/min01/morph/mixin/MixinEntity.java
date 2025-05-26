@@ -25,13 +25,6 @@ public class MixinEntity
 				cir.setReturnValue(true);
 			}
 		}
-		MorphUtil.getMorph(Entity.class.cast(this), t -> 
-		{
-			if(t.isAlliedTo(Entity.class.cast(this)))
-			{
-    			cir.setReturnValue(true);
-			}
-		});
 	}
 	
 	@Inject(at = @At(value = "HEAD"), method = "getAirSupply", cancellable = true)
@@ -48,7 +41,6 @@ public class MixinEntity
 	{
 		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
 		{
-			ci.cancel();
 			MorphUtil.getMorphOwner(Entity.class.cast(this)).setSecondsOnFire(second);
 		}
 	}
@@ -98,15 +90,6 @@ public class MixinEntity
 		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
 		{
 			MorphUtil.getMorphOwner(Entity.class.cast(this)).setDeltaMovement(vec3);
-		}
-	}
-	
-	@Inject(at = @At(value = "HEAD"), method = "getDeltaMovement", cancellable = true)
-	private void getDeltaMovement(CallbackInfoReturnable<Vec3> cir)
-	{
-		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
-		{
-			cir.setReturnValue(MorphUtil.getMorphOwner(Entity.class.cast(this)).getDeltaMovement());
 		}
 	}
 }
