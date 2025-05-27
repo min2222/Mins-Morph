@@ -114,6 +114,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 			}
 			if(this.entity instanceof Player player)
 			{
+				player.setNoGravity(this.morph.isNoGravity());
 				if(!player.getAbilities().instabuild && !player.isSpectator())
 				{
 					MoveControl control = ((Mob) this.morph).getMoveControl();
@@ -123,7 +124,6 @@ public class MorphCapabilityImpl implements IMorphCapability
 						if(!player.getAbilities().mayfly)
 						{
 							player.getAbilities().mayfly = true;
-							player.setNoGravity(this.morph.isNoGravity());
 							player.onUpdateAbilities();
 						}
 					}
@@ -131,7 +131,6 @@ public class MorphCapabilityImpl implements IMorphCapability
 					{
 						player.getAbilities().flying = false;
 						player.getAbilities().mayfly = false;
-						player.setNoGravity(false);
 						player.onUpdateAbilities();
 					}
 				}

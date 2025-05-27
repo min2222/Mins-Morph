@@ -478,8 +478,6 @@ public class MorphUtil
         
         morph.walkAnimation = player.walkAnimation;
 
-        morph.setDeltaMovement(player.getDeltaMovement());
-
         morph.horizontalCollision = player.horizontalCollision;
         morph.verticalCollision = player.verticalCollision;
         

@@ -84,12 +84,25 @@ public class MixinEntity
 		}
 	}
 	
-	@Inject(at = @At(value = "HEAD"), method = "setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", cancellable = true)
-	private void setDeltaMovement(Vec3 vec3, CallbackInfo ci)
+	//ChatGPT ahh;
+	@Inject(at = @At("RETURN"), method = "getDeltaMovement", cancellable = true)
+	private void getDeltaMovement(CallbackInfoReturnable<Vec3> cir)
 	{
-		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
-		{
-			MorphUtil.getMorphOwner(Entity.class.cast(this)).setDeltaMovement(vec3);
-		}
+	    Entity entity = (Entity)(Object)this;
+	    MorphUtil.getMorph(entity, t -> 
+	    {
+            Vec3 playerMove = cir.getReturnValue();
+            Vec3 morphMove = t.getDeltaMovement();
+            double epsilon = 1.0E-4;
+            double x = Math.abs(morphMove.x) > epsilon ? morphMove.x : playerMove.x;
+            double y = Math.abs(morphMove.y) > epsilon ? morphMove.y : playerMove.y;
+            double z = Math.abs(morphMove.z) > epsilon ? morphMove.z : playerMove.z;
+            Vec3 merged = new Vec3(x, y, z);
+            cir.setReturnValue(merged);
+            if(morphMove.lengthSqr() > epsilon * epsilon) 
+            {
+                t.setDeltaMovement(Vec3.ZERO);
+            }
+	    });
 	}
 }
