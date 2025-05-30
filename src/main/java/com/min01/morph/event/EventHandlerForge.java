@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
@@ -114,6 +115,21 @@ public class EventHandlerForge
     				list.removeIf(t -> t == owner);
     			}
     		}
+    	}
+    }
+    
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event)
+    {
+    	for(ServerPlayer serverPlayer : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+    	{
+    		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
+        	{
+        		if(t.getMorph() != null)
+        		{
+        			t.setMorph(t.getMorph());
+        		}
+        	});
     	}
     }
     

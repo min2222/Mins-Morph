@@ -14,6 +14,7 @@ import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.core.Holder;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -158,7 +159,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			if(cir.getReturnValue())
+			if(cir.getReturnValue() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
 			{
 				cir.setReturnValue(t.hurt(source, damage));
 			}
