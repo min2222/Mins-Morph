@@ -121,15 +121,18 @@ public class EventHandlerForge
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event)
     {
-    	for(ServerPlayer serverPlayer : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
+    	if(!event.getLevel().players().isEmpty())
     	{
-    		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
+        	if(event.getEntity() instanceof ServerPlayer serverPlayer)
         	{
-        		if(t.getMorph() != null)
-        		{
-        			t.setMorph(t.getMorph());
-        		}
-        	});
+        		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
+            	{
+            		if(t.getMorph() != null)
+            		{
+            			t.setMorph(t.getMorph());
+            		}
+            	});
+        	}
     	}
     }
     
