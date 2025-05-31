@@ -15,19 +15,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
 import net.minecraftforge.event.entity.living.LivingConversionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.server.ServerLifecycleHooks;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, modid = MinsMorph.MODID)
 public class EventHandlerForge
@@ -119,28 +115,10 @@ public class EventHandlerForge
     }
     
     @SubscribeEvent
-    public static void onEntityJoinLevel(EntityJoinLevelEvent event)
+    public static void onPlayerStartTracking(PlayerEvent.StartTracking event)
     {
-    	if(!event.getLevel().players().isEmpty())
-    	{
-        	if(event.getEntity() instanceof ServerPlayer serverPlayer)
-        	{
-        		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
-            	{
-            		if(t.getMorph() != null)
-            		{
-            			t.setMorph(t.getMorph());
-            		}
-            	});
-        	}
-    	}
-    }
-    
-    @SubscribeEvent
-    public static void onPlayerRespawn(PlayerRespawnEvent event)
-    {
-    	for(ServerPlayer serverPlayer : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
-    	{
+   		if(event.getTarget() instanceof ServerPlayer serverPlayer)
+		{
     		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
         	{
         		if(t.getMorph() != null)
@@ -148,22 +126,7 @@ public class EventHandlerForge
         			t.setMorph(t.getMorph());
         		}
         	});
-    	}
-    }
-    
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerLoggedInEvent event)
-    {
-    	for(ServerPlayer serverPlayer : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayers())
-    	{
-    		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
-        	{
-        		if(t.getMorph() != null)
-        		{
-        			t.setMorph(t.getMorph());
-        		}
-        	});
-    	}
+		}
     }
     
     @SubscribeEvent
