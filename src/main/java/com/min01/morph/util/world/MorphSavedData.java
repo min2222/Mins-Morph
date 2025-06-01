@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.min01.morph.network.MorphNetwork;
+import com.min01.morph.network.UpdateMorphSuggestionsPacket;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -154,37 +157,25 @@ public class MorphSavedData extends SavedData
 	{
 		return this.animationMap.get(mobName);
 	}
-	
-	public Map<String, List<String>> getDataMap()
-	{
-		return this.dataMap;
-	}
-	
-	public Map<String, List<String>> getGoalMap()
-	{
-		return this.goalMap;
-	}
-	
-	public Map<String, List<String>> getAnimationMap()
-	{
-		return this.animationMap;
-	}
 
 	public void saveAnimation(String mobName, List<String> animations)
 	{
 		this.animationMap.put(mobName, animations);
+		MorphNetwork.sendToAll(new UpdateMorphSuggestionsPacket("Animation", animations));
 		this.setDirty();
 	}
 	
 	public void saveGoal(String mobName, List<String> goals)
 	{
 		this.goalMap.put(mobName, goals);
+		MorphNetwork.sendToAll(new UpdateMorphSuggestionsPacket("Goal", goals));
 		this.setDirty();
 	}
 	
 	public void saveData(String mobName, List<String> datas)
 	{
 		this.dataMap.put(mobName, datas);
+		MorphNetwork.sendToAll(new UpdateMorphSuggestionsPacket("Data", datas));
 		this.setDirty();
 	}
 }

@@ -22,6 +22,7 @@ public class MorphNetwork
 	public static void registerMessages()
 	{
 		CHANNEL.registerMessage(ID++, UpdateMorphPacket.class, UpdateMorphPacket::encode, UpdateMorphPacket::new, UpdateMorphPacket.Handler::onMessage);
+		CHANNEL.registerMessage(ID++, UpdateMorphSuggestionsPacket.class, UpdateMorphSuggestionsPacket::encode, UpdateMorphSuggestionsPacket::new, UpdateMorphSuggestionsPacket.Handler::onMessage);
 	}
 	
     public static <MSG> void sendToServer(MSG message) 
