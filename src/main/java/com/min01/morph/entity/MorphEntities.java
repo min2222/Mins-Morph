@@ -14,7 +14,7 @@ public class MorphEntities
 {
 	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MinsMorph.MODID);
 
-	public static final RegistryObject<EntityType<EntityFakeTarget>> FAKE_TARGET = registerEntity("fake_target", createBuilder(EntityFakeTarget::new, MobCategory.MISC).sized(0.0F, 0.0F).fireImmune().noSave().noSummon().setShouldReceiveVelocityUpdates(false).setTrackingRange(0).updateInterval(0));
+	public static final RegistryObject<EntityType<EntityFakeTarget>> FAKE_TARGET = registerEntity("fake_target", createBuilder(EntityFakeTarget::new, MobCategory.MISC).fireImmune().noSave().noSummon().sized(0.0F, 0.0F));
 	
 	public static <T extends Entity> EntityType.Builder<T> createBuilder(EntityType.EntityFactory<T> factory, MobCategory category)
 	{

@@ -18,8 +18,6 @@ import net.minecraft.world.scores.Team;
 
 public class EntityFakeTarget extends AbstractOwnableMob<LivingEntity>
 {
-	public int tick;
-	
 	public EntityFakeTarget(EntityType<? extends AbstractOwnableMob<?>> p_21368_, Level p_21369_)
 	{
 		super(p_21368_, p_21369_);
