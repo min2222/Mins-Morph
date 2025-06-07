@@ -397,8 +397,9 @@ public class MorphUtil
     public static void tick(LivingEntity player, LivingEntity morph)
     {
     	morph.getPersistentData().putUUID("MorphOwnerUUID", player.getUUID());
-    	player.eyeHeight = morph.getEyeHeight();
+    	player.eyeHeight = morph.eyeHeight;
     	player.dimensions = morph.dimensions;
+    	player.refreshDimensions();
 		if(!player.isAlive())
 		{
 			morph.discard();

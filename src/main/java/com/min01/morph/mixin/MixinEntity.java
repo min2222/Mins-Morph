@@ -10,11 +10,23 @@ import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(Entity.class)
 public class MixinEntity 
 {
+	@Inject(at = @At(value = "RETURN"), method = "makeBoundingBox", cancellable = true)
+	private void makeBoundingBox(CallbackInfoReturnable<AABB> cir) 
+	{
+		Entity entity = Entity.class.cast(this);
+		MorphUtil.getMorph(entity, t -> 
+		{
+			entity.eyeHeight = t.eyeHeight;
+			cir.setReturnValue(t.dimensions.makeBoundingBox(t.position()));
+		});
+	}
+	
 	@Inject(at = @At(value = "HEAD"), method = "isAlliedTo(Lnet/minecraft/world/entity/Entity;)Z", cancellable = true)
 	private void isAlliedTo(Entity entity, CallbackInfoReturnable<Boolean> cir)
 	{

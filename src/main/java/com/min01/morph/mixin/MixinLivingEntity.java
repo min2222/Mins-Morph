@@ -20,6 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.monster.Spider;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.extensions.IForgeLivingEntity;
 import net.minecraftforge.fluids.FluidType;
@@ -44,7 +45,10 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			cir.setReturnValue(t.onClimbable());
+			if(t instanceof Spider)
+			{
+				cir.setReturnValue(living.horizontalCollision);
+			}
 		});
 	}
 	
