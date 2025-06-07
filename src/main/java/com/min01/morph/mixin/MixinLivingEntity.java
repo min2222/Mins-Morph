@@ -158,7 +158,11 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			t.hurt(source, damage);
+			boolean flag = t.hurt(source, damage);
+			if(!flag)
+			{
+				cir.setReturnValue(flag);
+			}
 		});
 	}
 	
