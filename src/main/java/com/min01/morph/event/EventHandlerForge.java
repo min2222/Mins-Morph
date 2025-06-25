@@ -10,6 +10,7 @@ import com.min01.morph.util.MorphUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
@@ -39,7 +40,10 @@ public class EventHandlerForge
     {
     	MorphUtil.getMorph(event.getEntity(), t -> 
     	{
-    		t.doHurtTarget(event.getTarget());
+    		if(t.getAttribute(Attributes.ATTACK_DAMAGE) != null)
+    		{
+        		t.doHurtTarget(event.getTarget());
+    		}
     	});
     }
     

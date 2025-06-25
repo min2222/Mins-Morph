@@ -14,7 +14,8 @@
 		"MixinLevelEntityGetterAdapter",
 		"MixinProjectile",
 		"MixinSynchedEntityData",
-		"MixinTrackedEntity"
+		"MixinTrackedEntity",
+		"LivingEntityInvoker"
 	],
 	"client": [
 	],

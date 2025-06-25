@@ -20,6 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Spider;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.extensions.IForgeLivingEntity;
@@ -82,6 +83,10 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			{
     			cir.setReturnValue(t.getAttribute(attribute));
 			}
+			if(attribute == ForgeMod.SWIM_SPEED.get() && t.getAttribute(Attributes.MOVEMENT_SPEED) != null)
+			{
+				cir.setReturnValue(t.getAttribute(Attributes.MOVEMENT_SPEED));
+			}
 		});
 	}
 	
@@ -94,6 +99,10 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			if(MorphUtil.ATTRIBUTES.contains(holder.value()) && t.getAttribute(holder.value()) != null)
 			{
     			cir.setReturnValue(cir.getReturnValue() + t.getAttributeValue(holder.value()));
+			}
+			if(holder.value() == ForgeMod.SWIM_SPEED.get() && t.getAttribute(Attributes.MOVEMENT_SPEED) != null)
+			{
+				cir.setReturnValue(cir.getReturnValue() + t.getAttributeValue(Attributes.MOVEMENT_SPEED));
 			}
 		});
 	}
@@ -108,6 +117,10 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			{
     			cir.setReturnValue(cir.getReturnValue() + t.getAttributeValue(attribute));
 			}
+			if(attribute == ForgeMod.SWIM_SPEED.get() && t.getAttribute(Attributes.MOVEMENT_SPEED) != null)
+			{
+				cir.setReturnValue(cir.getReturnValue() + t.getAttributeValue(Attributes.MOVEMENT_SPEED));
+			}
 		});
 	}
 
@@ -121,6 +134,10 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			{
     			cir.setReturnValue(t.getAttributeBaseValue(holder.value()));
 			}
+			if(holder.value() == ForgeMod.SWIM_SPEED.get() && t.getAttribute(Attributes.MOVEMENT_SPEED) != null)
+			{
+				cir.setReturnValue(t.getAttributeBaseValue(Attributes.MOVEMENT_SPEED));
+			}
 		});
 	}
 
@@ -133,6 +150,10 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 			if(MorphUtil.ATTRIBUTES.contains(attribute) && t.getAttribute(attribute) != null)
 			{
     			cir.setReturnValue(t.getAttributeBaseValue(attribute));
+			}
+			if(attribute == ForgeMod.SWIM_SPEED.get() && t.getAttribute(Attributes.MOVEMENT_SPEED) != null)
+			{
+				cir.setReturnValue(t.getAttributeBaseValue(Attributes.MOVEMENT_SPEED));
 			}
 		});
 	}
@@ -229,6 +250,44 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		{
 			((LivingEntity) MorphUtil.getMorphOwner(Entity.class.cast(this))).randomTeleport(x, y, z, flag);
 		}
+	}
+	
+
+	@Inject(at = @At(value = "HEAD"), method = "isAffectedByFluids", cancellable = true)
+	protected void isAffectedByFluids(CallbackInfoReturnable<Boolean> cir)
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			cir.setReturnValue(((LivingEntityInvoker)t).invokeIsAffectedByFluids());
+		});
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Inject(at = @At(value = "HEAD"), method = "isPushedByFluid", cancellable = true)
+	private void isPushedByFluid(CallbackInfoReturnable<Boolean> cir) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		MorphUtil.getMorph(living, t -> 
+		{
+			cir.setReturnValue(t.isPushedByFluid());
+		});
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public boolean isPushedByFluid(FluidType type) 
+	{
+		LivingEntity living = LivingEntity.class.cast(this);
+		if(living.getCapability(MorphCapabilities.MORPH).isPresent())
+		{
+			IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+			if(MorphUtil.hasMorph(living))
+			{
+				return cap.getMorph().isPushedByFluid(type);
+			}
+		}
+        return this.self().isPushedByFluid() && type.canPushEntity(self());
 	}
 	
 	@SuppressWarnings("deprecation")
