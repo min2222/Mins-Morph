@@ -59,7 +59,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		MorphUtil.getMorph(living, t -> 
 		{
-			cir.setReturnValue(t.getMaxHealth());
+			cir.setReturnValue((float) t.getAttributeValue(Attributes.MAX_HEALTH));
 		});
 	}
 	
