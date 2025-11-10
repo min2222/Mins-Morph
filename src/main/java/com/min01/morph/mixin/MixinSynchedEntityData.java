@@ -34,11 +34,9 @@ public class MixinSynchedEntityData
 			if(ServerLifecycleHooks.getCurrentServer() != null)
 			{
 				MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-				for(ServerPlayer player : server.getPlayerList().getPlayers()) 
-				{
-					List<SynchedEntityData.DataValue<?>> list = this.entity.getEntityData().packDirty();
-					if(list != null)
-					{
+				List<SynchedEntityData.DataValue<?>> list = this.entity.getEntityData().packDirty();
+				for(ServerPlayer player : server.getPlayerList().getPlayers()) {
+					if(list != null) {
 						player.connection.connection.send(new ClientboundSetEntityDataPacket(this.entity.getId(), list));
 					}
 				}
