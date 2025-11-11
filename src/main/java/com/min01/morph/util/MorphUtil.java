@@ -52,6 +52,8 @@ public class MorphUtil
 	
 	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
 	
+	public static final Method GET_ENTITY = ObfuscationReflectionHelper.findMethod(Level.class, "m_142646_");
+	
 	public static void setTarget(LivingEntity owner, Mob morph, LivingEntity fakeTarget)
 	{
 		morph.setTarget(fakeTarget);
@@ -372,7 +374,6 @@ public class MorphUtil
 		}
 	}
 
-    //ChatGPT ahh;
     public static ClassNode getClassNode(Class<?> clazz) throws IOException
     {
         String className = clazz.getName().replace('.', '/') + ".class";
@@ -411,10 +412,9 @@ public class MorphUtil
 			{
 				tickPassenger(morph, entity);
 			}
-			Method m = ObfuscationReflectionHelper.findMethod(Level.class, "m_142646_");
 			try
 			{
-				ILevelEntityGetterAdapter adapter = (ILevelEntityGetterAdapter) m.invoke(player.level);
+				ILevelEntityGetterAdapter adapter = (ILevelEntityGetterAdapter) GET_ENTITY.invoke(player.level);
 				adapter.byId().putIfAbsent(morph.getId(), morph);
 				adapter.byId().values().removeIf(t -> !t.isAlive());
 				adapter.byUuid().putIfAbsent(morph.getUUID(), morph);
@@ -422,7 +422,7 @@ public class MorphUtil
 			}
 			catch (Exception e) 
 			{
-				
+				e.printStackTrace();
 			}
 	    	if(morph instanceof Mob mob)
 	    	{
@@ -544,7 +544,7 @@ public class MorphUtil
 		}
 		catch (Exception e) 
 		{
-			
+			e.printStackTrace();
 		}
     }
     
@@ -560,10 +560,9 @@ public class MorphUtil
 	@SuppressWarnings("unchecked")
 	public static Entity getEntityByUUID(Level level, UUID uuid)
 	{
-		Method m = ObfuscationReflectionHelper.findMethod(Level.class, "m_142646_");
 		try 
 		{
-			LevelEntityGetter<Entity> entities = (LevelEntityGetter<Entity>) m.invoke(level);
+			LevelEntityGetter<Entity> entities = (LevelEntityGetter<Entity>) GET_ENTITY.invoke(level);
 			return entities.get(uuid);
 		}
 		catch (Exception e) 
