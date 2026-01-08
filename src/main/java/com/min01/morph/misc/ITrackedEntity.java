@@ -7,4 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 public interface ITrackedEntity
 {
 	public void updatePlayersCustom(List<ServerPlayer> players);
+	
+	public void setViewDist(int dist);
 }

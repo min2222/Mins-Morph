@@ -22,6 +22,9 @@ public class MixinChunkMap
 	@Shadow
 	@Final
 	private ServerLevel level;
+
+	@Shadow
+	int viewDistance;
 	
 	@Inject(at = @At(value = "HEAD"), method = "broadcastAndSend", cancellable = true)
 	private void broadcastAndSend(Entity entity, Packet<?> packet, CallbackInfo ci)
@@ -35,6 +38,7 @@ public class MixinChunkMap
 	            int j = type.updateInterval();
 	            ChunkMap.TrackedEntity chunkmap$trackedentity = ChunkMap.class.cast(this).new TrackedEntity(entity, i, j, type.trackDeltas());
 	            ((ITrackedEntity)chunkmap$trackedentity).updatePlayersCustom(this.level.players());
+	            ((ITrackedEntity)chunkmap$trackedentity).setViewDist(this.viewDistance);
 	            chunkmap$trackedentity.broadcastAndSend(packet);
 			}
 		}

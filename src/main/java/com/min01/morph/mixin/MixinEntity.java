@@ -96,11 +96,10 @@ public class MixinEntity
 		}
 	}
 	
-	//ChatGPT ahh;
 	@Inject(at = @At("RETURN"), method = "getDeltaMovement", cancellable = true)
 	private void getDeltaMovement(CallbackInfoReturnable<Vec3> cir)
 	{
-	    Entity entity = (Entity)(Object)this;
+	    Entity entity = Entity.class.cast(this);
 	    MorphUtil.getMorph(entity, t -> 
 	    {
             Vec3 playerMove = cir.getReturnValue();
