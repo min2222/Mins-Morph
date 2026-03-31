@@ -27,41 +27,38 @@ public class UpdateMorphSuggestionsPacket
 		this.suggestions = buf.readList(FriendlyByteBuf::readUtf);
 	}
 
-	public void encode(FriendlyByteBuf buf)
+	public void write(FriendlyByteBuf buf)
 	{
 		buf.writeUtf(this.suggestionType);
 		buf.writeCollection(this.suggestions, FriendlyByteBuf::writeUtf);
 	}
 	
-	public static class Handler 
+	public static boolean handle(UpdateMorphSuggestionsPacket message, Supplier<NetworkEvent.Context> ctx) 
 	{
-		public static boolean onMessage(UpdateMorphSuggestionsPacket message, Supplier<NetworkEvent.Context> ctx) 
+		ctx.get().enqueueWork(() ->
 		{
-			ctx.get().enqueueWork(() ->
+			if(ctx.get().getDirection().getReceptionSide().isClient())
 			{
-				if(ctx.get().getDirection().getReceptionSide().isClient())
+				LogicalSidedProvider.CLIENTWORLD.get(ctx.get().getDirection().getReceptionSide()).filter(ClientLevel.class::isInstance).ifPresent(level -> 
 				{
-					LogicalSidedProvider.CLIENTWORLD.get(ctx.get().getDirection().getReceptionSide()).filter(ClientLevel.class::isInstance).ifPresent(level -> 
+					List<String> suggestions = message.suggestions;
+					String type = message.suggestionType;
+					if(type.equals("Data"))
 					{
-						List<String> suggestions = message.suggestions;
-						String type = message.suggestionType;
-						if(type.equals("Data"))
-						{
-							MorphCommand.DATA_SUGGESTIONS = suggestions;
-						}
-						else if(type.equals("Goal"))
-						{
-							MorphCommand.GOAL_SUGGESTIONS = suggestions;
-						}
-						else if(type.equals("Animation"))
-						{
-							MorphCommand.ANIMATION_SUGGESTIONS = suggestions;
-						}
-					});
-				}
-			});
-			ctx.get().setPacketHandled(true);
-			return true;
-		}
+						MorphCommand.DATA_SUGGESTIONS = suggestions;
+					}
+					else if(type.equals("Goal"))
+					{
+						MorphCommand.GOAL_SUGGESTIONS = suggestions;
+					}
+					else if(type.equals("Animation"))
+					{
+						MorphCommand.ANIMATION_SUGGESTIONS = suggestions;
+					}
+				});
+			}
+		});
+		ctx.get().setPacketHandled(true);
+		return true;
 	}
 }

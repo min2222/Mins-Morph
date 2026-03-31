@@ -21,7 +21,7 @@ public class MorphConfig
     public MorphConfig(ForgeConfigSpec.Builder config) 
     {
     	config.push("Settings");
-    	MorphConfig.healthThreshold = config.comment("minimum value of health for show it as number instead of icon").defineInRange("healthThreshold", 100.0D, 0.0D, Double.MAX_VALUE);
+    	MorphConfig.healthThreshold = config.comment("if health of morphed mob is higher than threshold, it will displayed as number").defineInRange("healthThreshold", 100.0D, 0.0D, Double.MAX_VALUE);
         config.pop();
     }
 }

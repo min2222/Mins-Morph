@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.min01.morph.capabilities.IMorphCapability;
-import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.util.MorphUtil;
 
@@ -33,7 +32,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 	private void tick(CallbackInfo ci)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(IMorphCapability::tick);
+		living.getCapability(MorphCapabilityImpl.MORPH).ifPresent(IMorphCapability::tick);
 		if(MorphUtil.isMorph(living) && MorphUtil.getMorphOwner(living) == null)
 		{
 			living.discard();
@@ -279,9 +278,9 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 	public boolean isPushedByFluid(FluidType type) 
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		if(living.getCapability(MorphCapabilities.MORPH).isPresent())
+		if(living.getCapability(MorphCapabilityImpl.MORPH).isPresent())
 		{
-			IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 			if(MorphUtil.hasMorph(living))
 			{
 				return cap.getMorph().isPushedByFluid(type);
@@ -295,9 +294,9 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 	public boolean canDrownInFluidType(FluidType type)
 	{
 		LivingEntity living = LivingEntity.class.cast(this);
-		if(living.getCapability(MorphCapabilities.MORPH).isPresent())
+		if(living.getCapability(MorphCapabilityImpl.MORPH).isPresent())
 		{
-			IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 			if(MorphUtil.hasMorph(living))
 			{
 				return cap.getMorph().canDrownInFluidType(type);

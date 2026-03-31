@@ -3,15 +3,15 @@ package com.min01.morph.event;
 import java.util.List;
 
 import com.min01.morph.MinsMorph;
-import com.min01.morph.capabilities.MorphCapabilities;
+import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.command.MorphCommand;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.EntityHitResult;
@@ -69,7 +69,7 @@ public class EventHandlerForge
     	Player player = event.getEntity();
     	if(MorphUtil.isChangedDimension(player))
     	{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				t.setMorph((LivingEntity) t.getType().create(player.level));
 			});
@@ -123,7 +123,7 @@ public class EventHandlerForge
     {
    		if(event.getTarget() instanceof ServerPlayer serverPlayer)
 		{
-    		serverPlayer.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
+    		serverPlayer.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
         	{
         		if(t.getMorph() != null)
         		{
@@ -141,11 +141,11 @@ public class EventHandlerForge
         	Player original = event.getOriginal();
         	original.revive();
         	Player player = event.getEntity();
-        	original.getCapability(MorphCapabilities.MORPH).ifPresent(t ->
+        	original.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
         	{
         		if(t.getMorph() != null && t.isPersistent())
         		{
-        			player.getCapability(MorphCapabilities.MORPH).ifPresent(t2 ->
+        			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t2 ->
                 	{
                 		t2.setType(t.getMorph().getType());
                 		t2.setPersistent(true);

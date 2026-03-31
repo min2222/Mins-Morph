@@ -3,7 +3,7 @@ package com.min01.morph.network;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import com.min01.morph.capabilities.MorphCapabilities;
+import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -37,7 +37,7 @@ public class UpdateMorphPacket
 		this.reset = buf.readBoolean();
 	}
 
-	public void encode(FriendlyByteBuf buf)
+	public void write(FriendlyByteBuf buf)
 	{
 		buf.writeUUID(this.entityUUID);
 		buf.writeResourceLocation(ForgeRegistries.ENTITY_TYPES.getKey(this.type));
@@ -45,38 +45,35 @@ public class UpdateMorphPacket
 		buf.writeBoolean(this.reset);
 	}
 	
-	public static class Handler 
+	public static boolean handle(UpdateMorphPacket message, Supplier<NetworkEvent.Context> ctx) 
 	{
-		public static boolean onMessage(UpdateMorphPacket message, Supplier<NetworkEvent.Context> ctx) 
+		ctx.get().enqueueWork(() ->
 		{
-			ctx.get().enqueueWork(() ->
+			if(ctx.get().getDirection().getReceptionSide().isClient())
 			{
-				if(ctx.get().getDirection().getReceptionSide().isClient())
+				LogicalSidedProvider.CLIENTWORLD.get(ctx.get().getDirection().getReceptionSide()).filter(ClientLevel.class::isInstance).ifPresent(level -> 
 				{
-					LogicalSidedProvider.CLIENTWORLD.get(ctx.get().getDirection().getReceptionSide()).filter(ClientLevel.class::isInstance).ifPresent(level -> 
+					LivingEntity entity = (LivingEntity) MorphUtil.getEntityByUUID(level, message.entityUUID);
+					if(entity != null)
 					{
-						LivingEntity entity = (LivingEntity) MorphUtil.getEntityByUUID(level, message.entityUUID);
-						if(entity != null)
+						entity.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 						{
-							entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+							if(!message.reset)
 							{
-								if(!message.reset)
-								{
-									LivingEntity living = (LivingEntity) message.type.create(level);
-									living.setId(message.entityId);
-									t.setMorph(living);
-								}
-								else
-								{
-									MorphUtil.removeMorph(entity);
-								}
-							});
-						}
-					});
-				}
-			});
-			ctx.get().setPacketHandled(true);
-			return true;
-		}
+								LivingEntity living = (LivingEntity) message.type.create(level);
+								living.setId(message.entityId);
+								t.setMorph(living);
+							}
+							else
+							{
+								MorphUtil.removeMorph(entity);
+							}
+						});
+					}
+				});
+			}
+		});
+		ctx.get().setPacketHandled(true);
+		return true;
 	}
 }

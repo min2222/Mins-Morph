@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.min01.morph.entity.EntityFakeTarget;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.network.MorphNetwork;
@@ -13,6 +16,7 @@ import com.min01.morph.network.UpdateMorphPacket;
 import com.min01.morph.util.MorphUtil;
 import com.min01.morph.util.world.MorphSavedData;
 
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
@@ -29,12 +33,18 @@ import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.piglin.AbstractPiglin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class MorphCapabilityImpl implements IMorphCapability
 {
+	public static final Capability<IMorphCapability> MORPH = CapabilityManager.get(new CapabilityToken<>() {});
+	
 	private LivingEntity entity;
 	private LivingEntity morph;
 	private LivingEntity target;
@@ -42,6 +52,8 @@ public class MorphCapabilityImpl implements IMorphCapability
 	private boolean isPersistent;
 	private boolean changedDimension;
 	private List<Map<String, String>> dataList = new ArrayList<>();
+	private String selectedGoalName = "";
+	private String selectedAnimationName = "";
 	
 	@Override
 	public CompoundTag serializeNBT() 
@@ -67,6 +79,8 @@ public class MorphCapabilityImpl implements IMorphCapability
 		nbt.putBoolean("isPersistent", this.isPersistent);
 		nbt.putBoolean("ChangedDimension", this.changedDimension);
 		nbt.put("MobDatas", datas);
+		nbt.putString("SelectedGoal", this.selectedGoalName);
+		nbt.putString("SelectedAnimation", this.selectedAnimationName);
 		return nbt;
 	}
 
@@ -75,20 +89,20 @@ public class MorphCapabilityImpl implements IMorphCapability
 	{
 		if(nbt.contains("MorphType"))
 		{
-			this.type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(nbt.getString("MorphType")));
+			this.setType(ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.parse(nbt.getString("MorphType"))));
 		}
 		ListTag datas = nbt.getList("MobDatas", 11);
 		for(int i = 0; i < datas.size(); ++i)
 		{
 			CompoundTag tag = datas.getCompound(i);
-			Map<String, String> map = new HashMap<>();
 			String dataName = tag.getString("DataName");
 			String dataValue = tag.getString("DataValue");
-			map.put(dataName, dataValue);
-			this.dataList.add(map);
+			this.setData(dataName, dataValue);
 		}
-		this.isPersistent = nbt.getBoolean("isPersistent");
-		this.changedDimension = nbt.getBoolean("ChangedDimension");
+		this.setPersistent(nbt.getBoolean("isPersistent"));
+		this.setChangedDimension(nbt.getBoolean("ChangedDimension"));
+		this.selectGoal(nbt.getString("SelectedGoal"));
+		this.selectAnimation(nbt.getString("SelectedAnimation"));
 	}
 
 	@Override
@@ -155,11 +169,36 @@ public class MorphCapabilityImpl implements IMorphCapability
 			this.setMorph((LivingEntity) this.type.create(this.entity.level));
 		}
 	}
+
+	@Override
+	public void selectGoal(String selectedGoal) 
+	{
+		this.selectedGoalName = selectedGoal;
+	}
+	
+	@Override
+	public String getSelectedGoal()
+	{
+		return this.selectedGoalName;
+	}
+	
+	@Override
+	public void selectAnimation(String selectedAnimation) 
+	{
+		this.selectedAnimationName = selectedAnimation;
+	}
+	
+	@Override
+	public String getSelectedAnimation()
+	{
+		return this.selectedAnimationName;
+	}
 	
 	@Override
 	public void setPersistent(boolean isPersistent) 
 	{
 		this.isPersistent = isPersistent;
+		this.sendUpdataPacket();
 	}
 	
 	@Override
@@ -228,6 +267,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 	public void setType(EntityType<?> type) 
 	{
 		this.type = type;
+		this.sendUpdataPacket();
 	}
 	
 	@Override
@@ -243,17 +283,19 @@ public class MorphCapabilityImpl implements IMorphCapability
 	}
 	
 	@Override
-	public void setData(LivingEntity living, String dataName, String dataValue) 
+	public void setData(String dataName, String dataValue) 
 	{
 		Map<String, String> map = new HashMap<>();
 		map.put(dataName, dataValue);
 		this.dataList.add(map);
+		this.sendUpdataPacket();
 	}
 	
 	@Override
 	public void setChangedDimension(boolean isChangedDimension)
 	{
-		this.changedDimension = true;
+		this.changedDimension = isChangedDimension;
+		this.sendUpdataPacket();
 	}
 	
 	@Override
@@ -275,5 +317,11 @@ public class MorphCapabilityImpl implements IMorphCapability
 				MorphNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this.entity), new UpdateMorphPacket(this.entity, EntityType.PIG, 0, true));
 			}
 		}
+	}
+	
+	@Override
+	public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) 
+	{
+		return MORPH.orEmpty(cap, LazyOptional.of(() -> this));
 	}
 }

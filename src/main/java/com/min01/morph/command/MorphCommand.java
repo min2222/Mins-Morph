@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
-import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.misc.IWrappedGoal;
@@ -44,7 +43,7 @@ public class MorphCommand
 	public static List<String> GOAL_SUGGESTIONS = new ArrayList<>();
 	public static List<String> ANIMATION_SUGGESTIONS = new ArrayList<>();
 	
-	public static final SuggestionProvider<CommandSourceStack> DATAS = SuggestionProviders.register(new ResourceLocation("datas"), (p_258164_, p_258165_) -> 
+	public static final SuggestionProvider<CommandSourceStack> DATAS = SuggestionProviders.register(ResourceLocation.parse("datas"), (p_258164_, p_258165_) -> 
 	{
 		if(p_258164_.getSource() instanceof CommandSourceStack source) 
 		{
@@ -54,7 +53,7 @@ public class MorphCommand
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 	        		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()), p_258165_);
 	        	}
 			}
@@ -66,7 +65,7 @@ public class MorphCommand
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
-	public static final SuggestionProvider<CommandSourceStack> GOALS = SuggestionProviders.register(new ResourceLocation("goals"), (p_258164_, p_258165_) -> 
+	public static final SuggestionProvider<CommandSourceStack> GOALS = SuggestionProviders.register(ResourceLocation.parse("goals"), (p_258164_, p_258165_) -> 
 	{
 		if(p_258164_.getSource() instanceof CommandSourceStack source) 
 		{
@@ -76,7 +75,7 @@ public class MorphCommand
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 	        		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()), p_258165_);
 	        	}
 			}
@@ -88,7 +87,7 @@ public class MorphCommand
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
-	public static final SuggestionProvider<CommandSourceStack> ANIMATIONS = SuggestionProviders.register(new ResourceLocation("animations"), (p_258164_, p_258165_) -> 
+	public static final SuggestionProvider<CommandSourceStack> ANIMATIONS = SuggestionProviders.register(ResourceLocation.parse("animations"), (p_258164_, p_258165_) -> 
 	{
 		if(p_258164_.getSource() instanceof CommandSourceStack source) 
 		{
@@ -98,7 +97,7 @@ public class MorphCommand
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 	        		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()), p_258165_);
 	        	}
 			}
@@ -110,7 +109,7 @@ public class MorphCommand
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
 	
-	public static final SuggestionProvider<CommandSourceStack> ENTITIES = SuggestionProviders.register(new ResourceLocation("entities"), (p_258164_, p_258165_) -> 
+	public static final SuggestionProvider<CommandSourceStack> ENTITIES = SuggestionProviders.register(ResourceLocation.parse("entities"), (p_258164_, p_258165_) -> 
 	{
 		return SharedSuggestionProvider.suggestResource(ForgeRegistries.ENTITY_TYPES.getValues().stream().filter((p_247987_) -> 
 		{
@@ -151,7 +150,7 @@ public class MorphCommand
 	{
 		for(ServerPlayer player : players)
 		{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{
@@ -186,7 +185,7 @@ public class MorphCommand
 	{
 		for(ServerPlayer player : players)
 		{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{
@@ -222,13 +221,13 @@ public class MorphCommand
 	{
 		for(ServerPlayer player : players)
 		{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{
 					Mob mob = (Mob) t.getMorph();
 					MorphUtil.setData(mob, dataName, dataValue);
-					t.setData(player, dataName, dataValue);
+					t.setData(dataName, dataValue);
 					sourceStack.sendSuccess(() -> Component.literal("Changed entity data " + dataName + " to " + dataValue), true);
 				}
 			});
@@ -240,7 +239,7 @@ public class MorphCommand
 	{
 		for(ServerPlayer player : players)
 		{
-			player.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{

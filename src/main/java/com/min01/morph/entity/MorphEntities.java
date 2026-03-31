@@ -23,6 +23,6 @@ public class MorphEntities
 	
 	public static <T extends Entity> RegistryObject<EntityType<T>> registerEntity(String name, EntityType.Builder<T> builder) 
 	{
-		return ENTITY_TYPES.register(name, () -> builder.build(new ResourceLocation(MinsMorph.MODID, name).toString()));
+		return ENTITY_TYPES.register(name, () -> builder.build(ResourceLocation.fromNamespaceAndPath(MinsMorph.MODID, name).toString()));
 	}
 }

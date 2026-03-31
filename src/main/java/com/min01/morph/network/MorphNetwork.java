@@ -12,7 +12,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 public class MorphNetwork 
 {
 	private static final String PROTOCOL_VERSION = "1";
-	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(MinsMorph.MODID, "minsmorph"),
+	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath(MinsMorph.MODID, "minsmorph"),
 			() -> PROTOCOL_VERSION,
 			PROTOCOL_VERSION::equals,
 			PROTOCOL_VERSION::equals
@@ -21,8 +21,10 @@ public class MorphNetwork
 	public static int ID = 0;
 	public static void registerMessages()
 	{
-		CHANNEL.registerMessage(ID++, UpdateMorphPacket.class, UpdateMorphPacket::encode, UpdateMorphPacket::new, UpdateMorphPacket.Handler::onMessage);
-		CHANNEL.registerMessage(ID++, UpdateMorphSuggestionsPacket.class, UpdateMorphSuggestionsPacket::encode, UpdateMorphSuggestionsPacket::new, UpdateMorphSuggestionsPacket.Handler::onMessage);
+		CHANNEL.registerMessage(ID++, UpdateMorphPacket.class, UpdateMorphPacket::write, UpdateMorphPacket::new, UpdateMorphPacket::handle);
+		CHANNEL.registerMessage(ID++, UpdateMorphSuggestionsPacket.class, UpdateMorphSuggestionsPacket::write, UpdateMorphSuggestionsPacket::new, UpdateMorphSuggestionsPacket::handle);
+		CHANNEL.registerMessage(ID++, SelectGoalPacket.class, SelectGoalPacket::write, SelectGoalPacket::new, SelectGoalPacket::handle);
+		CHANNEL.registerMessage(ID++, TriggerGoalPacket.class, TriggerGoalPacket::write, TriggerGoalPacket::new, TriggerGoalPacket::handle);
 	}
 	
     public static <MSG> void sendToServer(MSG message) 

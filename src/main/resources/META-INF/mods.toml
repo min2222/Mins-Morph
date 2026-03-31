@@ -17,7 +17,7 @@ license="GPLv3 License"
 # The modid of the mod
 modId="minsmorph" #mandatory
 # The version number of the mod
-version="1.0.0" #mandatory
+version="2.0.0" #mandatory
 # A display name for the mod
 displayName="Min's Morph" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
@@ -39,7 +39,7 @@ authors="min01" #optional
 #displayTest="MATCH_VERSION" # MATCH_VERSION is the default if nothing is specified (#optional)
 
 # The description text for the mod (multi line!) (#mandatory)
-description='''yet another morph mod, but you can use ability of morphed mob.'''
+description='''Yet another morph mod, but you can use ability of morphed mob.'''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.minsmorph]] #optional
     # the modid of the dependency

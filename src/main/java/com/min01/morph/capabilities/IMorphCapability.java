@@ -7,12 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.capabilities.AutoRegisterCapability;
-import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 
 @AutoRegisterCapability
-public interface IMorphCapability extends INBTSerializable<CompoundTag>
+public interface IMorphCapability extends ICapabilitySerializable<CompoundTag>
 {
-	ResourceLocation ID = new ResourceLocation(MinsMorph.MODID, "morph");
+	ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MinsMorph.MODID, "morph");
 
 	void setEntity(LivingEntity entity);
 	
@@ -32,9 +32,17 @@ public interface IMorphCapability extends INBTSerializable<CompoundTag>
 	
 	LivingEntity getFakeTarget();
 	
-	void setData(LivingEntity living, String dataName, String dataValue);
+	void setData(String dataName, String dataValue);
 	
 	void setChangedDimension(boolean isChangedDimension);
 	
 	boolean isChangedDimension();
+	
+	void selectGoal(String selectedGoal);
+	
+	String getSelectedGoal();
+	
+	void selectAnimation(String selectedAnimation);
+	
+	String getSelectedAnimation();
 }

@@ -29,7 +29,6 @@ base {
 
 mixin {
     add sourceSets.main, "minsmorph.refmap.json"
-
     config "minsmorph.mixin.json"
 }
 
@@ -166,6 +165,11 @@ dependencies {
     // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
     // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.3"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.5.3")) 
+    {
+        jarJar.ranged(it, "[0.5.3,)")
+    }
 	annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 	implementation fg.deobf("software.bernie.geckolib:geckolib-forge-1.20.1:4.8.2")
 	implementation("com.eliotlash.mclib:mclib:20")

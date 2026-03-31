@@ -22,7 +22,6 @@ import org.objectweb.asm.tree.MethodNode;
 
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
-import com.min01.morph.capabilities.MorphCapabilities;
 import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
@@ -54,6 +53,50 @@ public class MorphUtil
 	
 	public static final Method GET_ENTITY = ObfuscationReflectionHelper.findMethod(Level.class, "m_142646_");
 	
+	public static void selectAnimation(Player player, String animationName)
+	{
+		player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+		{
+			t.selectAnimation(animationName);
+		});
+	}
+	
+	public static void selectGoal(Player player, String goalName)
+	{
+		player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+		{
+			t.selectGoal(goalName);
+		});
+	}
+	
+	public static void triggerGoal(Player player)
+	{
+		player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+		{
+			if(t.getMorph() != null && t.getSelectedGoal() != null)
+			{
+				String goalName = t.getSelectedGoal();
+				String animationName = t.getSelectedAnimation();
+				Mob mob = (Mob) t.getMorph();
+				Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
+				List<WrappedGoal> list = Lists.newArrayList(set);
+				for(WrappedGoal goal : set)
+				{
+					int index = list.indexOf(goal);
+					char lastChar = goalName.charAt(goalName.length() - 1);
+					String name = MorphUtil.getGoalName(goal.getGoal());
+					if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
+					{
+						((IWrappedGoal) goal).setCanUse();
+						MorphUtil.setTarget(player, mob, goal, t.getFakeTarget());
+						MorphUtil.setAnimation(mob, animationName);
+						goal.start();
+						break;
+					}
+				}
+			}
+		});
+	}
 	public static void setTarget(LivingEntity owner, Mob morph, LivingEntity fakeTarget)
 	{
 		morph.setTarget(fakeTarget);
@@ -84,7 +127,7 @@ public class MorphUtil
 	
 	public static void getMorph(Entity entity, Consumer<LivingEntity> consumer)
 	{
-		entity.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		entity.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 		{
     		LivingEntity morph = t.getMorph();
     		if(morph != null)
@@ -96,36 +139,36 @@ public class MorphUtil
 	
 	public static boolean isMorph(Entity entity)
 	{
-		return entity.getId() < 0;
+		return entity.getId() < 0 && !(entity instanceof Player);
 	}
 	
 	public static void setChangedDimension(LivingEntity living, boolean value)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 		cap.setChangedDimension(value);
 	}
 	
 	public static boolean isChangedDimension(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 		return cap.isChangedDimension();
 	}
 	
 	public static boolean isPersistent(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 		return cap.isPersistent();
 	}
 	
 	public static boolean hasMorph(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilities.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
 		return cap.getMorph() != null;
 	}
 	
 	public static void removeMorph(LivingEntity living)
 	{
-		living.getCapability(MorphCapabilities.MORPH).ifPresent(t -> 
+		living.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 		{
 			if(hasMorph(living))
 			{
@@ -513,7 +556,14 @@ public class MorphUtil
         else 
         {
         	mob.level.getProfiler().push("goalSelector");
-        	mob.goalSelector.tick();
+        	try
+        	{
+        		mob.goalSelector.tick();
+        	}
+        	catch(Exception e)
+        	{
+        		e.printStackTrace();
+        	}
         	mob.level.getProfiler().pop();
         }
 
