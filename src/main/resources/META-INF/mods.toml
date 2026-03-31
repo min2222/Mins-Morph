@@ -39,7 +39,7 @@ authors="min01" #optional
 #displayTest="MATCH_VERSION" # MATCH_VERSION is the default if nothing is specified (#optional)
 
 # The description text for the mod (multi line!) (#mandatory)
-description='''Yet another morph mod, but you can use ability of morphed mob.'''
+description='''Yet another morph mod, but allow to use ability of morphed mob.'''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.minsmorph]] #optional
     # the modid of the dependency
