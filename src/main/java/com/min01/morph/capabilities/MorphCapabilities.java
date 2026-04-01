@@ -11,9 +11,7 @@ public class MorphCapabilities
     	Entity entity = event.getObject();
     	if(entity instanceof LivingEntity living)
     	{
-    		MorphCapabilityImpl cap = new MorphCapabilityImpl();
-        	cap.setEntity(living);
-    		event.addCapability(MorphCapabilityImpl.ID, cap);
+    		event.addCapability(MorphCapabilityImpl.ID, new MorphCapabilityImpl(living));
     	}
 	}
 }

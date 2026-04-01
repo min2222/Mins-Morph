@@ -45,7 +45,7 @@ public class MorphCapabilityImpl implements IMorphCapability
 {
 	public static final Capability<IMorphCapability> MORPH = CapabilityManager.get(new CapabilityToken<>() {});
 	
-	private LivingEntity entity;
+	private final LivingEntity entity;
 	private LivingEntity morph;
 	private LivingEntity target;
 	private EntityType<?> type;
@@ -54,6 +54,11 @@ public class MorphCapabilityImpl implements IMorphCapability
 	private List<Map<String, String>> dataList = new ArrayList<>();
 	private String selectedGoalName = "";
 	private String selectedAnimationName = "";
+	
+	public MorphCapabilityImpl(LivingEntity entity)
+	{
+		this.entity = entity;
+	}
 	
 	@Override
 	public CompoundTag serializeNBT() 
@@ -103,12 +108,6 @@ public class MorphCapabilityImpl implements IMorphCapability
 		this.setChangedDimension(nbt.getBoolean("ChangedDimension"));
 		this.selectGoal(nbt.getString("SelectedGoal"));
 		this.selectAnimation(nbt.getString("SelectedAnimation"));
-	}
-
-	@Override
-	public void setEntity(LivingEntity entity) 
-	{
-		this.entity = entity;
 	}
 	
 	@Override

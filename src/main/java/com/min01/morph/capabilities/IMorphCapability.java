@@ -14,8 +14,6 @@ public interface IMorphCapability extends ICapabilitySerializable<CompoundTag>
 {
 	ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MinsMorph.MODID, "morph");
 
-	void setEntity(LivingEntity entity);
-	
 	void tick();
 	
 	void setPersistent(boolean isPersistent);

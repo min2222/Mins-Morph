@@ -53,7 +53,7 @@ public class MorphCommand
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(player));
 	        		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()), p_258165_);
 	        	}
 			}
@@ -75,7 +75,7 @@ public class MorphCommand
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(player));
 	        		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()), p_258165_);
 	        	}
 			}
@@ -97,7 +97,7 @@ public class MorphCommand
 				MorphSavedData data = MorphSavedData.get(player.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(player));
 	        		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()), p_258165_);
 	        	}
 			}

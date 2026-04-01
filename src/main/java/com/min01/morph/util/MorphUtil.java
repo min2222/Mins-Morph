@@ -144,25 +144,25 @@ public class MorphUtil
 	
 	public static void setChangedDimension(LivingEntity living, boolean value)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 		cap.setChangedDimension(value);
 	}
 	
 	public static boolean isChangedDimension(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 		return cap.isChangedDimension();
 	}
 	
 	public static boolean isPersistent(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 		return cap.isPersistent();
 	}
 	
 	public static boolean hasMorph(LivingEntity living)
 	{
-		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 		return cap.getMorph() != null;
 	}
 	

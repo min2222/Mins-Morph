@@ -280,7 +280,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		if(living.getCapability(MorphCapabilityImpl.MORPH).isPresent())
 		{
-			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 			if(MorphUtil.hasMorph(living))
 			{
 				return cap.getMorph().isPushedByFluid(type);
@@ -296,7 +296,7 @@ public abstract class MixinLivingEntity implements IForgeLivingEntity
 		LivingEntity living = LivingEntity.class.cast(this);
 		if(living.getCapability(MorphCapabilityImpl.MORPH).isPresent())
 		{
-			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl());
+			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 			if(MorphUtil.hasMorph(living))
 			{
 				return cap.getMorph().canDrownInFluidType(type);
