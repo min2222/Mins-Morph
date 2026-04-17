@@ -18,6 +18,8 @@ import net.minecraft.world.scores.Team;
 
 public class EntityFakeTarget extends AbstractOwnableMob<LivingEntity>
 {
+	private int lifeTicks = 40;
+
 	public EntityFakeTarget(EntityType<? extends AbstractOwnableMob<?>> p_21368_, Level p_21369_)
 	{
 		super(p_21368_, p_21369_);
@@ -31,6 +33,11 @@ public class EntityFakeTarget extends AbstractOwnableMob<LivingEntity>
 	public void tick() 
 	{
 		super.tick();
+		if(--this.lifeTicks <= 0)
+		{
+			this.discard();
+			return;
+		}
 		if(this.getOwner() == null)
 		{
 			this.discard();
@@ -45,6 +52,11 @@ public class EntityFakeTarget extends AbstractOwnableMob<LivingEntity>
 				this.discard();
 			}
 		}
+	}
+
+	public void setLifeTicks(int lifeTicks)
+	{
+		this.lifeTicks = lifeTicks;
 	}
 	
 	@Override

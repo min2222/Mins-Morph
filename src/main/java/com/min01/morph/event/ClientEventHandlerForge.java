@@ -3,11 +3,11 @@ package com.min01.morph.event;
 import org.lwjgl.opengl.GL11;
 
 import com.min01.morph.MinsMorph;
-import com.min01.morph.command.MorphCommand;
 import com.min01.morph.config.MorphConfig;
 import com.min01.morph.gui.GoalMenuScreen;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.TriggerGoalPacket;
+import com.min01.morph.util.MorphClientState;
 import com.min01.morph.util.MorphClientUtil;
 import com.min01.morph.util.MorphUtil;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -31,6 +31,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -46,6 +47,12 @@ public class ClientEventHandlerForge
     private static final double INNER_RADIUS = 60;
     private static boolean lastWheelState = false;
     
+	@SubscribeEvent
+	public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event)
+	{
+		MorphClientState.clear();
+	}
+
 	@SubscribeEvent
     public static void onRenderGuiOverlayEvent(RenderGuiOverlayEvent event)
     {
@@ -138,7 +145,19 @@ public class ClientEventHandlerForge
         
         if(ClientEventHandler.TRIGGER.consumeClick())
         {
-        	MorphNetwork.sendToServer(new TriggerGoalPacket());
+        	Player player = MorphClientUtil.MC.player;
+        	if(player != null)
+        	{
+        		MorphClientState.Snapshot snapshot = MorphClientState.getSnapshot(player.getUUID());
+        		if(snapshot != null)
+        		{
+        			MorphNetwork.sendToServer(new TriggerGoalPacket(player.getUUID(), snapshot.getRevision()));
+        		}
+        		else
+        		{
+        			player.displayClientMessage(Component.translatable("minsmorph.sync.waiting"), true);
+        		}
+        	}
         }
     }
 
@@ -158,20 +177,36 @@ public class ClientEventHandlerForge
         }
     }
     
-    private static void renderText(GuiGraphics guiGraphics) {
+    private static void renderText(GuiGraphics guiGraphics)
+    {
         Minecraft mc = Minecraft.getInstance();
         Window window = mc.getWindow();
         Font fontRenderer = mc.font;
+        Player player = mc.player;
+        if(player == null)
+        {
+        	return;
+        }
+        MorphClientState.Snapshot snapshot = MorphClientState.getSnapshot(player.getUUID());
+        if(snapshot == null)
+        {
+        	return;
+        }
         double mouseAngle = MorphClientUtil.getMouseAngle();
-        int goalSize = MorphCommand.GOAL_SUGGESTIONS.size();
-        int animationSize = MorphCommand.ANIMATION_SUGGESTIONS.size();
+        int goalSize = snapshot.getGoals().size();
+        int animationSize = snapshot.getAnimations().size();
         int totalSize = goalSize + animationSize;
+        if(totalSize <= 0)
+        {
+        	return;
+        }
         float angle = 360 / totalSize;
         mouseAngle -= angle / 2;
         mouseAngle = 360 - mouseAngle;
         mouseAngle = MorphClientUtil.correctAngle(mouseAngle);
 
-        for (int i = 0; i < totalSize; i++) {
+        for(int i = 0; i < totalSize; i++)
+        {
             double currAngle = angle * i;
             double nextAngle = currAngle + angle;
             currAngle = MorphClientUtil.correctAngle(currAngle);
@@ -179,14 +214,17 @@ public class ClientEventHandlerForge
 
             boolean mouseIn = mouseAngle > currAngle && mouseAngle < nextAngle;
 
-            if (mouseIn) {
+            if(mouseIn) 
+            {
             	int index = i - goalSize;
             	String name = "";
-            	if(i < goalSize) {
-                	name = MorphCommand.GOAL_SUGGESTIONS.get(i);
+            	if(i < goalSize) 
+            	{
+                	name = snapshot.getGoals().get(i);
             	}
-            	else if(index < animationSize && index > 0) {
-                	name = MorphCommand.ANIMATION_SUGGESTIONS.get(index);
+            	else if(index < animationSize && index >= 0) 
+            	{
+                	name = snapshot.getAnimations().get(index);
         		}
 
                 int drawX = window.getGuiScaledWidth() / 2 - fontRenderer.width(name) / 2;
@@ -225,8 +263,26 @@ public class ClientEventHandlerForge
         }
     }
 
-    private static void renderButtonBackgrounds() {
+    private static void renderButtonBackgrounds()
+    {
         Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+        if(player == null)
+        {
+        	return;
+        }
+        MorphClientState.Snapshot snapshot = MorphClientState.getSnapshot(player.getUUID());
+        if(snapshot == null)
+        {
+        	return;
+        }
+        int goalSize = snapshot.getGoals().size();
+        int animationSize = snapshot.getAnimations().size();
+        int totalSize = goalSize + animationSize;
+        if(totalSize <= 0)
+        {
+        	return;
+        }
         PoseStack poseStack = RenderSystem.getModelViewStack();
         poseStack.pushPose();
         poseStack.translate(mc.getWindow().getGuiScaledWidth() * 0.5D, mc.getWindow().getGuiScaledHeight() * 0.5D, 0);
@@ -238,15 +294,12 @@ public class ClientEventHandlerForge
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-
-        int goalSize = MorphCommand.GOAL_SUGGESTIONS.size();
-        int animationSize = MorphCommand.ANIMATION_SUGGESTIONS.size();
-        int totalSize = goalSize + animationSize;
         float angle = 360 / totalSize;
         double mouseAngle = MorphClientUtil.getMouseAngle();
         mouseAngle -= (angle / 2);
         mouseAngle = MorphClientUtil.correctAngle(mouseAngle);
-        for (int i = 0; i < totalSize; i++) {
+        for(int i = 0; i < totalSize; i++)
+        {
             double currAngle = (angle * i) + 90 + (angle / 2);
             double nextAngle = (currAngle + angle);
             currAngle = MorphClientUtil.correctAngle(currAngle);
@@ -268,12 +321,15 @@ public class ClientEventHandlerForge
 
             float r, g, b, alpha;
 
-            if (mouseIn) {
+            if(mouseIn)
+            {
                 r = 1;
                 g = 0;
                 b = 0;
                 alpha = 153 / (float) 255;
-            } else {
+            } 
+            else
+            {
                 r = 0;
                 g = 0;
                 b = 0;

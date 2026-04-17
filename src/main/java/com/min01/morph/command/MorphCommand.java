@@ -1,16 +1,11 @@
 package com.min01.morph.command;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
 import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.entity.MorphEntities;
-import com.min01.morph.misc.IWrappedGoal;
 import com.min01.morph.util.MorphUtil;
 import com.min01.morph.util.world.MorphSavedData;
 import com.mojang.brigadier.CommandDispatcher;
@@ -33,34 +28,29 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class MorphCommand 
 {
-	public static List<String> DATA_SUGGESTIONS = new ArrayList<>();
-	public static List<String> GOAL_SUGGESTIONS = new ArrayList<>();
-	public static List<String> ANIMATION_SUGGESTIONS = new ArrayList<>();
-	
 	public static final SuggestionProvider<CommandSourceStack> DATAS = SuggestionProviders.register(ResourceLocation.parse("datas"), (p_258164_, p_258165_) -> 
 	{
 		if(p_258164_.getSource() instanceof CommandSourceStack source) 
 		{
-			ServerPlayer player = source.getPlayer();
-			if(player != null)
+			LivingEntity owner = getSuggestionOwner(source);
+			if(owner != null)
 			{
-				MorphSavedData data = MorphSavedData.get(player.level);
+				MorphSavedData data = MorphSavedData.get(owner.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(player));
-	        		return SharedSuggestionProvider.suggest(data.getDatas(cap.getMorph().getClass().getSimpleName()), p_258165_);
+	        		IMorphCapability cap = owner.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(owner));
+	        		if(cap.getMorph() != null)
+	        		{
+	        			return SharedSuggestionProvider.suggest(data.getDatas(MorphSavedData.getMorphKey(cap.getMorph().getType())), p_258165_);
+	        		}
 	        	}
 			}
-		}
-		else
-		{
-			return SharedSuggestionProvider.suggest(DATA_SUGGESTIONS, p_258165_);
 		}
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
@@ -69,20 +59,19 @@ public class MorphCommand
 	{
 		if(p_258164_.getSource() instanceof CommandSourceStack source) 
 		{
-			ServerPlayer player = source.getPlayer();
-			if(player != null)
+			LivingEntity owner = getSuggestionOwner(source);
+			if(owner != null)
 			{
-				MorphSavedData data = MorphSavedData.get(player.level);
+				MorphSavedData data = MorphSavedData.get(owner.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(player));
-	        		return SharedSuggestionProvider.suggest(data.getGoals(cap.getMorph().getClass().getSimpleName()), p_258165_);
+	        		IMorphCapability cap = owner.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(owner));
+	        		if(cap.getMorph() != null)
+	        		{
+	        			return SharedSuggestionProvider.suggest(data.getGoals(MorphSavedData.getMorphKey(cap.getMorph().getType())), p_258165_);
+	        		}
 	        	}
 			}
-		}
-		else
-		{
-			return SharedSuggestionProvider.suggest(GOAL_SUGGESTIONS, p_258165_);
 		}
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
@@ -91,20 +80,19 @@ public class MorphCommand
 	{
 		if(p_258164_.getSource() instanceof CommandSourceStack source) 
 		{
-			ServerPlayer player = source.getPlayer();
-			if(player != null)
+			LivingEntity owner = getSuggestionOwner(source);
+			if(owner != null)
 			{
-				MorphSavedData data = MorphSavedData.get(player.level);
+				MorphSavedData data = MorphSavedData.get(owner.level);
 	        	if(data != null)
 	        	{
-	        		IMorphCapability cap = player.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(player));
-	        		return SharedSuggestionProvider.suggest(data.getAnimations(cap.getMorph().getClass().getSimpleName()), p_258165_);
+	        		IMorphCapability cap = owner.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(owner));
+	        		if(cap.getMorph() != null)
+	        		{
+	        			return SharedSuggestionProvider.suggest(data.getAnimations(MorphSavedData.getMorphKey(cap.getMorph().getType())), p_258165_);
+	        		}
 	        	}
 			}
-		}
-		else
-		{
-			return SharedSuggestionProvider.suggest(ANIMATION_SUGGESTIONS, p_258165_);
 		}
 		return SharedSuggestionProvider.suggest(Stream.empty(), p_258165_);
 	});
@@ -125,157 +113,161 @@ public class MorphCommand
 		dispatcher.register(Commands.literal("morph").requires((sourceStack) -> 
 		{
 			return sourceStack.hasPermission(2);
-		}).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("set").then(Commands.argument("morphTarget", ResourceArgument.resource(ctx, Registries.ENTITY_TYPE)).suggests(ENTITIES).then(Commands.argument("persistent", BoolArgumentType.bool()).executes((commandCtx) -> 
+		}).then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("set").then(Commands.argument("morphTarget", ResourceArgument.resource(ctx, Registries.ENTITY_TYPE)).suggests(ENTITIES).then(Commands.argument("persistent", BoolArgumentType.bool()).executes((commandCtx) -> 
 		{
-			return morph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), ResourceArgument.getEntityType(commandCtx, "morphTarget"), BoolArgumentType.getBool(commandCtx, "persistent"));
-		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("set").then(Commands.argument("morphTarget", ResourceArgument.resource(ctx, Registries.ENTITY_TYPE)).suggests(ENTITIES).executes((commandCtx) -> 
+			return morph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "targets"), ResourceArgument.getEntityType(commandCtx, "morphTarget"), BoolArgumentType.getBool(commandCtx, "persistent"));
+		}))))).then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("set").then(Commands.argument("morphTarget", ResourceArgument.resource(ctx, Registries.ENTITY_TYPE)).suggests(ENTITIES).executes((commandCtx) -> 
 		{
-			return morph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), ResourceArgument.getEntityType(commandCtx, "morphTarget"), false);
-		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("trigger").then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).executes(commandCtx -> 
+			return morph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "targets"), ResourceArgument.getEntityType(commandCtx, "morphTarget"), false);
+		})))).then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("trigger").then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).executes(commandCtx -> 
 		{
-			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"));
-		})))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("trigger").then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes(commandCtx -> 
+			return triggerGoal(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "targets"), StringArgumentType.getString(commandCtx, "goalName"));
+		})))).then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("trigger").then(Commands.argument("goalName", StringArgumentType.string()).suggests(GOALS).then(Commands.argument("animationName", StringArgumentType.string()).suggests(ANIMATIONS).executes(commandCtx -> 
 		{
-			return triggerGoalWithAnimation(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "animationName"));
-		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("data").then(Commands.argument("dataName", StringArgumentType.string()).suggests(DATAS).then(Commands.argument("dataValue", StringArgumentType.string()).executes(commandCtx -> 
+			return triggerGoalWithAnimation(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "targets"), StringArgumentType.getString(commandCtx, "goalName"), StringArgumentType.getString(commandCtx, "animationName"));
+		}))))).then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("data").then(Commands.argument("dataName", StringArgumentType.string()).suggests(DATAS).then(Commands.argument("dataValue", StringArgumentType.string()).executes(commandCtx -> 
 		{
-			return setData(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"), StringArgumentType.getString(commandCtx, "dataName"), StringArgumentType.getString(commandCtx, "dataValue"));
-		}))))).then(Commands.argument("players", EntityArgument.players()).then(Commands.literal("reset").executes((commandCtx) -> 
+			return setData(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "targets"), StringArgumentType.getString(commandCtx, "dataName"), StringArgumentType.getString(commandCtx, "dataValue"));
+		}))))).then(Commands.argument("targets", EntityArgument.players()).then(Commands.literal("reset").executes((commandCtx) -> 
 		{
-			return unmorph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "players"));
+			return unmorph(commandCtx.getSource(), EntityArgument.getPlayers(commandCtx, "targets"));
 		}))));
 	}
-	
-	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName)
+
+	private static LivingEntity getSuggestionOwner(CommandSourceStack source)
 	{
-		for(ServerPlayer player : players)
+		if(source.getEntity() instanceof LivingEntity living)
 		{
-			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+			return living;
+		}
+		return null;
+	}
+	
+	private static int triggerGoal(CommandSourceStack sourceStack, Collection<ServerPlayer> targets, String goalName)
+	{
+		for(ServerPlayer target : targets)
+		{
+			target.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{
-					Mob mob = (Mob) t.getMorph();
-					Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
-					List<WrappedGoal> list = Lists.newArrayList(set);
-					for(WrappedGoal goal : set)
+					if(MorphUtil.selectGoalByName(target, goalName))
 					{
-						int index = list.indexOf(goal);
-						char lastChar = goalName.charAt(goalName.length() - 1);
-						String name = MorphUtil.getGoalName(goal.getGoal());
-						if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
-						{
-							((IWrappedGoal) goal).setCanUse();
-							MorphUtil.setTarget(player, mob, goal, t.getFakeTarget());
-							goal.start();
-							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
-							break;
-						}
+						MorphUtil.triggerGoal(target);
+						sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName), true);
+					}
+					else
+					{
+						sourceStack.sendFailure(Component.literal("Unknown goal: " + goalName));
 					}
 				}
 				else
 				{
-					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+					sourceStack.sendFailure(Component.literal("Target is not morphed"));
 				}
 			});
 		}
-		return players.size();
+		return targets.size();
 	}
 	
-	private static int triggerGoalWithAnimation(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String goalName, String animationName)
+	private static int triggerGoalWithAnimation(CommandSourceStack sourceStack, Collection<ServerPlayer> targets, String goalName, String animationName)
 	{
-		for(ServerPlayer player : players)
+		for(ServerPlayer target : targets)
 		{
-			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+			target.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{
-					Mob mob = (Mob) t.getMorph();
-					Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
-					List<WrappedGoal> list = Lists.newArrayList(set);
-					for(WrappedGoal goal : set)
+					if(!MorphUtil.selectGoalByName(target, goalName))
 					{
-						int index = list.indexOf(goal);
-						char lastChar = goalName.charAt(goalName.length() - 1);
-						String name = MorphUtil.getGoalName(goal.getGoal());
-						if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
-						{
-							((IWrappedGoal) goal).setCanUse();
-							MorphUtil.setTarget(player, mob, goal, t.getFakeTarget());
-							MorphUtil.setAnimation(mob, animationName);
-							goal.start();
-							sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName + " with animation " + animationName), true);
-							break;
-						}
+						sourceStack.sendFailure(Component.literal("Unknown goal: " + goalName));
+						return;
 					}
+					if(!MorphUtil.selectAnimationByName(target, animationName))
+					{
+						sourceStack.sendFailure(Component.literal("Unknown animation: " + animationName));
+						return;
+					}
+					MorphUtil.triggerGoal(target);
+					sourceStack.sendSuccess(() -> Component.literal("Triggered goal " + goalName + " with animation " + animationName), true);
 				}
 				else
 				{
-					sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+					sourceStack.sendFailure(Component.literal("Target is not morphed"));
 				}
 			});
 		}
-		return players.size();
+		return targets.size();
 	}
 	
-	private static int setData(CommandSourceStack sourceStack, Collection<ServerPlayer> players, String dataName, String dataValue)
+	private static int setData(CommandSourceStack sourceStack, Collection<ServerPlayer> targets, String dataName, String dataValue)
 	{
-		for(ServerPlayer player : players)
+		for(ServerPlayer target : targets)
 		{
-			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+			target.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
-				if(t.getMorph() != null)
+				if(t.getMorph() instanceof Mob mob)
 				{
-					Mob mob = (Mob) t.getMorph();
-					MorphUtil.setData(mob, dataName, dataValue);
-					t.setData(dataName, dataValue);
-					sourceStack.sendSuccess(() -> Component.literal("Changed entity data " + dataName + " to " + dataValue), true);
+					if(t.getDataOptions().contains(dataName) && MorphUtil.setData(mob, dataName, dataValue))
+					{
+						t.setData(dataName, dataValue);
+						sourceStack.sendSuccess(() -> Component.literal("Changed entity data " + dataName + " to " + dataValue), true);
+					}
+					else
+					{
+						sourceStack.sendFailure(Component.literal("Unknown or unsupported data: " + dataName));
+					}
 				}
 			});
 		}
-		return players.size();
+		return targets.size();
 	}
 	
-	private static int morph(CommandSourceStack sourceStack, Collection<ServerPlayer> players, Reference<EntityType<?>> entityType, boolean isPersistent)
+	private static int morph(CommandSourceStack sourceStack, Collection<ServerPlayer> targets, Reference<EntityType<?>> entityType, boolean isPersistent)
 	{
-		for(ServerPlayer player : players)
+		for(ServerPlayer target : targets)
 		{
-			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+			target.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
 				if(t.getMorph() != null)
 				{
-					MorphUtil.removeMorph(player);
+					MorphUtil.removeMorph(target);
 				}
-				Entity entity = entityType.get().create(player.level);
-				if(entity instanceof Mob mob)
+				Entity entity = entityType.get().create(target.level);
+				if(entityType.get() == MorphEntities.FAKE_TARGET.get())
+				{
+					sourceStack.sendFailure(Component.literal("Can't morph to internal fake target"));
+				}
+				else if(entity instanceof LivingEntity livingMorph)
 				{
 					t.setPersistent(isPersistent);
-					t.setMorph(mob);
-					player.setHealth(mob.getMaxHealth());
-					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + player.getDisplayName().getString() + " to " + mob.getDisplayName().getString()), true);
+					t.setMorph(livingMorph);
+					target.setHealth(Math.min(target.getMaxHealth(), livingMorph.getMaxHealth()));
+					sourceStack.sendSuccess(() -> Component.literal("Changed morph entity of " + target.getDisplayName().getString() + " to " + livingMorph.getDisplayName().getString()), true);
 				}
 				else
 				{
-					sourceStack.sendFailure(Component.literal("Can't morph to none living entity"));
+					sourceStack.sendFailure(Component.literal("Can't morph to non-living entity"));
 				}
 			});
 		}
-		return players.size();
+		return targets.size();
 	}
 	
-	private static int unmorph(CommandSourceStack sourceStack, Collection<ServerPlayer> players)
+	private static int unmorph(CommandSourceStack sourceStack, Collection<ServerPlayer> targets)
 	{
-		for(ServerPlayer player : players)
+		for(ServerPlayer target : targets)
 		{
-			if(MorphUtil.hasMorph(player))
+			if(MorphUtil.hasMorph(target))
 			{
-				MorphUtil.removeMorph(player);
-				sourceStack.sendSuccess(() -> Component.literal("Removed morph of " + player.getDisplayName().getString()), true);
+				MorphUtil.removeMorph(target);
+				sourceStack.sendSuccess(() -> Component.literal("Removed morph of " + target.getDisplayName().getString()), true);
 			}
 			else
 			{
-				sourceStack.sendFailure(Component.literal("Player doesn't morphed to anything"));
+				sourceStack.sendFailure(Component.literal("Target is not morphed"));
 			}
 		}
-		return players.size();
+		return targets.size();
 	}
 }

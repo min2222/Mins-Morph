@@ -33,6 +33,12 @@ public class MixinWrappedGoal implements IWrappedGoal
 	
 	@Unique
 	private boolean canUse;
+
+	@Unique
+	private boolean manualActive;
+
+	@Unique
+	private int manualGraceTicks;
 	
 	@Shadow
 	private Goal goal;
@@ -42,14 +48,16 @@ public class MixinWrappedGoal implements IWrappedGoal
 	{
 		if(this.mob != null && MorphUtil.isMorph(this.mob))
 		{
-			if(this.mob.getClass().getSimpleName().equals("EntityCorpseWarlock"))
+			boolean inManualWindow = this.mob.getPersistentData().getInt(MorphUtil.MANUAL_TRIGGER_TICKS_KEY) > 0;
+			boolean forced = this.canUse;
+			// Consume one-shot arm flag so unrelated future ticks cannot auto-retrigger.
+			if(forced)
 			{
-				cir.setReturnValue(cir.getReturnValue() || this.canUse);
+				this.canUse = false;
 			}
-			else
-			{
-				cir.setReturnValue(this.canUse);
-			}
+			// Some goals still require original canUse path when manually activated.
+			boolean allowOriginalPath = (this.manualActive || inManualWindow) && cir.getReturnValue();
+			cir.setReturnValue(forced || allowOriginalPath);
 		}
 	}
 	
@@ -58,15 +66,28 @@ public class MixinWrappedGoal implements IWrappedGoal
 	{
 		if(this.mob != null && MorphUtil.isMorph(this.mob))
 		{
+			boolean inManualWindow = this.mob.getPersistentData().getInt(MorphUtil.MANUAL_TRIGGER_TICKS_KEY) > 0;
+			if(!this.manualActive && !inManualWindow)
+			{
+				cir.setReturnValue(false);
+				return;
+			}
+			if(this.manualGraceTicks > 0)
+			{
+				cir.setReturnValue(true);
+				return;
+			}
 			try 
 			{
 				Method m = this.mob.getClass().getMethod("getAnimationTick");
 				int animationTick = (int) m.invoke(this.mob);
-				cir.setReturnValue(animationTick > 0);
+				// Keep goal active only while an animation is actually progressing.
+				cir.setReturnValue(cir.getReturnValue() || animationTick > 0);
 			}
 			catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
 			{
-				
+				// For non-animated goals, defer to original continuation logic.
+				cir.setReturnValue(cir.getReturnValue());
 			}
 		}
 	}
@@ -91,6 +112,10 @@ public class MixinWrappedGoal implements IWrappedGoal
 			{
 				this.mob.setTarget(this.fakeTarget);
 			}
+			if(this.manualGraceTicks > 0)
+			{
+				this.manualGraceTicks--;
+			}
 		}
 	}
 	
@@ -101,6 +126,8 @@ public class MixinWrappedGoal implements IWrappedGoal
 		{
 			this.mob.setTarget(null);
 			this.canUse = false;
+			this.manualActive = false;
+			this.manualGraceTicks = 0;
 			this.target = null;
 			this.fakeTarget = null;
 		}
@@ -128,5 +155,7 @@ public class MixinWrappedGoal implements IWrappedGoal
 	public void setCanUse() 
 	{
 		this.canUse = true;
+		this.manualActive = true;
+		this.manualGraceTicks = 10;
 	}
 }

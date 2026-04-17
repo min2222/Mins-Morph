@@ -1,9 +1,10 @@
 package com.min01.morph.gui;
 
-import com.min01.morph.command.MorphCommand;
 import com.min01.morph.network.MorphNetwork;
 import com.min01.morph.network.SelectGoalPacket;
+import com.min01.morph.util.MorphClientState;
 import com.min01.morph.util.MorphClientUtil;
+import com.min01.morph.util.MorphSelectionType;
 import com.min01.morph.util.MorphUtil;
 
 import net.minecraft.client.Minecraft;
@@ -35,11 +36,19 @@ public class GoalMenuScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (active) {
+        if (active && this.getMinecraft().player != null) {
+            MorphClientState.Snapshot snapshot = MorphClientState.getSnapshot(this.getMinecraft().player.getUUID());
+            if(snapshot == null) {
+            	this.getMinecraft().player.displayClientMessage(Component.translatable("minsmorph.sync.waiting"), true);
+            	return true;
+            }
             double mouseAngle = MorphClientUtil.getMouseAngle();
-            int goalSize = MorphCommand.GOAL_SUGGESTIONS.size();
-            int animationSize = MorphCommand.ANIMATION_SUGGESTIONS.size();
+            int goalSize = snapshot.getGoals().size();
+            int animationSize = snapshot.getAnimations().size();
             int totalSize = goalSize + animationSize;
+            if(totalSize <= 0) {
+            	return true;
+            }
             float angle = 360 / totalSize;
             mouseAngle -= angle / 2;
             mouseAngle = 360 - mouseAngle;
@@ -57,14 +66,21 @@ public class GoalMenuScreen extends Screen {
                     if (mouseIn) {
                         if (button == 0) {
                         	int index = i - goalSize;
-                        	String name = "";
+                        	int selectionId = -1;
+                        	MorphSelectionType selectionType = MorphSelectionType.GOAL;
                         	if(i < goalSize) {
-                            	name = MorphCommand.GOAL_SUGGESTIONS.get(i);
+                        		selectionId = i;
+                        		selectionType = MorphSelectionType.GOAL;
                         	}
-                        	else if(index < animationSize && index > 0) {
-                            	name = MorphCommand.ANIMATION_SUGGESTIONS.get(index);
+                        	else if(index < animationSize && index >= 0) {
+                        		selectionId = index;
+                        		selectionType = MorphSelectionType.ANIMATION;
                     		}
-                        	MorphNetwork.sendToServer(new SelectGoalPacket(name));
+                        	if(selectionId < 0) {
+                        		deactivate();
+                        		return true;
+                        	}
+                        	MorphNetwork.sendToServer(new SelectGoalPacket(this.getMinecraft().player.getUUID(), selectionType, selectionId, snapshot.getRevision()));
                         	this.getMinecraft().player.playSound(SoundEvents.UI_BUTTON_CLICK.get());
                             deactivate();
                             return true;

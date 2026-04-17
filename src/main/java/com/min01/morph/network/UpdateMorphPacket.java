@@ -60,12 +60,26 @@ public class UpdateMorphPacket
 						{
 							if(!message.reset)
 							{
-								LivingEntity living = (LivingEntity) message.type.create(level);
-								living.setId(message.entityId);
-								t.setMorph(living);
+								if(message.type != null)
+								{
+									if(message.type.create(level) instanceof LivingEntity living)
+									{
+										living.setId(message.entityId);
+										t.setMorph(living);
+									}
+									else
+									{
+										MorphUtil.removeMorph(entity);
+									}
+								}
+								else
+								{
+									MorphUtil.removeMorph(entity);
+								}
 							}
 							else
 							{
+								com.min01.morph.util.MorphClientState.removeSnapshot(message.entityUUID);
 								MorphUtil.removeMorph(entity);
 							}
 						});

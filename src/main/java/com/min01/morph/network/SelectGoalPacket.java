@@ -1,30 +1,45 @@
 package com.min01.morph.network;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
-import com.min01.morph.command.MorphCommand;
 import com.min01.morph.util.MorphUtil;
+import com.min01.morph.util.MorphSelectionType;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
 public class SelectGoalPacket 
 {
-	private final String goalName;
+	private final UUID ownerUuid;
+	private final MorphSelectionType selectionType;
+	private final int selectionId;
+	private final int revision;
 	
-	public SelectGoalPacket(String goalName) 
+	public SelectGoalPacket(UUID ownerUuid, MorphSelectionType selectionType, int selectionId, int revision) 
 	{
-		this.goalName = goalName;
+		this.ownerUuid = ownerUuid;
+		this.selectionType = selectionType;
+		this.selectionId = selectionId;
+		this.revision = revision;
 	}
 
 	public SelectGoalPacket(FriendlyByteBuf buf)
 	{
-		this.goalName = buf.readUtf();
+		this.ownerUuid = buf.readUUID();
+		int ordinal = buf.readVarInt();
+		MorphSelectionType[] values = MorphSelectionType.values();
+		this.selectionType = ordinal >= 0 && ordinal < values.length ? values[ordinal] : MorphSelectionType.GOAL;
+		this.selectionId = buf.readVarInt();
+		this.revision = buf.readVarInt();
 	}
 
 	public void write(FriendlyByteBuf buf)
 	{
-		buf.writeUtf(this.goalName);
+		buf.writeUUID(this.ownerUuid);
+		buf.writeVarInt(this.selectionType.ordinal());
+		buf.writeVarInt(this.selectionId);
+		buf.writeVarInt(this.revision);
 	}
 	
 	public static boolean handle(SelectGoalPacket message, Supplier<NetworkEvent.Context> ctx) 
@@ -33,14 +48,11 @@ public class SelectGoalPacket
 		{
 			if(ctx.get().getDirection().getReceptionSide().isServer())
 			{
-				if(MorphCommand.ANIMATION_SUGGESTIONS.contains(message.goalName))
+				if(ctx.get().getSender() == null || message.selectionId < 0)
 				{
-					MorphUtil.selectAnimation(ctx.get().getSender(), message.goalName);
+					return;
 				}
-				else
-				{
-					MorphUtil.selectGoal(ctx.get().getSender(), message.goalName);
-				}
+				MorphUtil.selectOption(ctx.get().getSender(), message.ownerUuid, message.selectionType, message.selectionId, message.revision);
 			}
 		});
 		ctx.get().setPacketHandled(true);

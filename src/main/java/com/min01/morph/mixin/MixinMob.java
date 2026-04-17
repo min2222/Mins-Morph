@@ -40,30 +40,24 @@ public class MixinMob
 	@Inject(at = @At(value = "HEAD"), method = "setTarget", cancellable = true)
 	private void setTarget(@Nullable LivingEntity target, CallbackInfo ci)
 	{
-		if(MorphUtil.getMorphOwner(Mob.class.cast(this)) != null)
-		{
-			if(MorphUtil.getMorphOwner(Mob.class.cast(this)) == target)
-			{
-				ci.cancel();
-			}
-		}
+		Mob attacker = Mob.class.cast(this);
 		if(target != null)
 		{
+			if(MorphUtil.shouldCancelMorphTarget(attacker, target))
+			{
+				ci.cancel();
+				return;
+			}
 			if(MorphUtil.getMorphOwner(target) != null)
 			{
 				ci.cancel();
-				Mob.class.cast(this).setTarget((LivingEntity) MorphUtil.getMorphOwner(target));
+				attacker.setTarget((LivingEntity) MorphUtil.getMorphOwner(target));
+				return;
 			}
-			MorphUtil.getMorph(target, t -> 
-			{
-    			if(t.getType() == Mob.class.cast(this).getType())
-    			{
-    				ci.cancel();
-    			}
-			});
-			if(MorphUtil.getMorphOwner(Mob.class.cast(this)) == null && target instanceof EntityFakeTarget)
+			if(MorphUtil.getMorphOwner(attacker) == null && target instanceof EntityFakeTarget)
 			{
 				ci.cancel();
+				return;
 			}
 		}
 	}

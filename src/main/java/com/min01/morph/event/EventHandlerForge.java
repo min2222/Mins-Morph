@@ -7,18 +7,20 @@ import com.min01.morph.capabilities.MorphCapabilityImpl;
 import com.min01.morph.command.MorphCommand;
 import com.min01.morph.util.MorphUtil;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent.ImpactResult;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingConversionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -71,9 +73,56 @@ public class EventHandlerForge
     	{
 			player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 			{
-				t.setMorph((LivingEntity) t.getType().create(player.level));
+				if(t.getType() != null && t.getType().create(player.level) instanceof LivingEntity morph)
+				{
+					t.setMorph(morph);
+				}
+				else
+				{
+					MorphUtil.removeMorph(player);
+				}
 			});
     		MorphUtil.setChangedDimension(player, false);
+    	}
+    }
+
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event)
+    {
+    	if(event.getLevel().isClientSide())
+    	{
+    		return;
+    	}
+    	if(event.getEntity() instanceof LivingEntity living && !(living instanceof Player) && MorphUtil.isChangedDimension(living))
+    	{
+    		living.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
+    		{
+    			if(t.getMorph() == null && t.getType() != null && t.getType().create(living.level) instanceof LivingEntity morph)
+    			{
+    				t.setMorph(morph);
+    			}
+    			MorphUtil.setChangedDimension(living, false);
+    		});
+    	}
+    }
+    
+    @SubscribeEvent
+    public static void onLivingAttack(LivingAttackEvent event)
+    {
+    	LivingEntity target = event.getEntity();
+    	Entity attacker = event.getSource().getEntity();
+    	if(attacker instanceof LivingEntity livingAttacker && MorphUtil.areFriendly(livingAttacker, target))
+    	{
+    		event.setCanceled(true);
+    		return;
+    	}
+    	LivingEntity effectiveTarget = MorphUtil.getEffectiveLivingTarget(target);
+    	if(attacker instanceof Mob mobAttacker)
+    	{
+    		if(effectiveTarget != target && !mobAttacker.canAttack(effectiveTarget))
+    		{
+    			event.setCanceled(true);
+    		}
     	}
     }
     
@@ -121,9 +170,9 @@ public class EventHandlerForge
     @SubscribeEvent
     public static void onPlayerStartTracking(PlayerEvent.StartTracking event)
     {
-   		if(event.getTarget() instanceof ServerPlayer serverPlayer)
+   		if(event.getTarget() instanceof LivingEntity living)
 		{
-    		serverPlayer.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
+   			living.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
         	{
         		if(t.getMorph() != null)
         		{

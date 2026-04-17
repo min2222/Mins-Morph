@@ -1,5 +1,7 @@
 package com.min01.morph.capabilities;
 
+import java.util.List;
+
 import com.min01.morph.MinsMorph;
 
 import net.minecraft.nbt.CompoundTag;
@@ -43,4 +45,28 @@ public interface IMorphCapability extends ICapabilitySerializable<CompoundTag>
 	void selectAnimation(String selectedAnimation);
 	
 	String getSelectedAnimation();
+
+	void setSelectedGoalId(int selectedGoalId);
+
+	int getSelectedGoalId();
+
+	void setSelectedAnimationId(int selectedAnimationId);
+
+	int getSelectedAnimationId();
+
+	void setGoalOptions(List<String> options);
+
+	List<String> getGoalOptions();
+
+	void setAnimationOptions(List<String> options);
+
+	List<String> getAnimationOptions();
+
+	void setDataOptions(List<String> options);
+
+	List<String> getDataOptions();
+
+	void setOptionsRevision(int revision);
+
+	int getOptionsRevision();
 }

@@ -30,12 +30,10 @@ public class MixinEntity
 	@Inject(at = @At(value = "HEAD"), method = "isAlliedTo(Lnet/minecraft/world/entity/Entity;)Z", cancellable = true)
 	private void isAlliedTo(Entity entity, CallbackInfoReturnable<Boolean> cir)
 	{
-		if(MorphUtil.getMorphOwner(Entity.class.cast(this)) != null)
+		Entity self = Entity.class.cast(this);
+		if(MorphUtil.areFriendly(self, entity))
 		{
-			if(entity == MorphUtil.getMorphOwner(Entity.class.cast(this)))
-			{
-				cir.setReturnValue(true);
-			}
+			cir.setReturnValue(true);
 		}
 	}
 	

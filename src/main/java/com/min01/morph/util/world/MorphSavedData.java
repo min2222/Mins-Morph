@@ -6,15 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.min01.morph.network.MorphNetwork;
-import com.min01.morph.network.UpdateMorphSuggestionsPacket;
-
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class MorphSavedData extends SavedData
 {
@@ -28,11 +27,18 @@ public class MorphSavedData extends SavedData
     {
         if(level instanceof ServerLevel serverLevel) 
         {
-            DimensionDataStorage storage = serverLevel.getDataStorage();
+        	ServerLevel overworld = serverLevel.getServer().overworld();
+        	DimensionDataStorage storage = overworld.getDataStorage();
             MorphSavedData data = storage.computeIfAbsent(MorphSavedData::load, MorphSavedData::new, NAME);
             return data;
         }
         return null;
+    }
+
+    public static String getMorphKey(net.minecraft.world.entity.EntityType<?> entityType)
+    {
+    	ResourceLocation key = ForgeRegistries.ENTITY_TYPES.getKey(entityType);
+    	return key == null ? "minecraft:pig" : key.toString();
     }
 
     public static MorphSavedData load(CompoundTag nbt) 
@@ -145,37 +151,34 @@ public class MorphSavedData extends SavedData
 	
 	public List<String> getDatas(String mobName)
 	{
-		return this.dataMap.get(mobName);
+		return this.dataMap.getOrDefault(mobName, new ArrayList<>());
 	}
 	
 	public List<String> getGoals(String mobName)
 	{
-		return this.goalMap.get(mobName);
+		return this.goalMap.getOrDefault(mobName, new ArrayList<>());
 	}
 	
 	public List<String> getAnimations(String mobName)
 	{
-		return this.animationMap.get(mobName);
+		return this.animationMap.getOrDefault(mobName, new ArrayList<>());
 	}
 
 	public void saveAnimation(String mobName, List<String> animations)
 	{
 		this.animationMap.put(mobName, animations);
-		MorphNetwork.sendToAll(new UpdateMorphSuggestionsPacket("Animation", animations));
 		this.setDirty();
 	}
 	
 	public void saveGoal(String mobName, List<String> goals)
 	{
 		this.goalMap.put(mobName, goals);
-		MorphNetwork.sendToAll(new UpdateMorphSuggestionsPacket("Goal", goals));
 		this.setDirty();
 	}
 	
 	public void saveData(String mobName, List<String> datas)
 	{
 		this.dataMap.put(mobName, datas);
-		MorphNetwork.sendToAll(new UpdateMorphSuggestionsPacket("Data", datas));
 		this.setDirty();
 	}
 }

@@ -5,13 +5,17 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -23,13 +27,20 @@ import org.objectweb.asm.tree.MethodNode;
 import com.google.common.collect.Lists;
 import com.min01.morph.capabilities.IMorphCapability;
 import com.min01.morph.capabilities.MorphCapabilityImpl;
+import com.min01.morph.entity.EntityFakeTarget;
+import com.min01.morph.entity.MorphEntities;
 import com.min01.morph.misc.ILevelEntityGetterAdapter;
 import com.min01.morph.misc.IWrappedGoal;
+import com.min01.morph.network.MorphNetwork;
+import com.min01.morph.network.SyncMorphOptionsPacket;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -46,82 +57,349 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 public class MorphUtil 
 {
+	public static final String MANUAL_TRIGGER_TICKS_KEY = "MorphManualTriggerTicks";
+	private static final Pattern GOAL_INDEX_PATTERN = Pattern.compile("^(.*?)(\\d+)$");
+	private static final List<MobActionAdapter> ACTION_ADAPTERS = new ArrayList<>();
+
 	public static final Map<Integer, Entity> ENTITY_MAP = new HashMap<>();
 	public static final Map<Integer, Entity> ENTITY_MAP2 = new HashMap<>();
 	
 	public static final List<Attribute> ATTRIBUTES = Lists.newArrayList(Attributes.ARMOR, Attributes.ARMOR_TOUGHNESS, Attributes.ATTACK_DAMAGE, Attributes.ATTACK_KNOCKBACK, Attributes.FLYING_SPEED, Attributes.FOLLOW_RANGE, Attributes.JUMP_STRENGTH, Attributes.KNOCKBACK_RESISTANCE, Attributes.MAX_HEALTH);
 	
 	public static final Method GET_ENTITY = ObfuscationReflectionHelper.findMethod(Level.class, "m_142646_");
-	
-	public static void selectAnimation(Player player, String animationName)
+
+	static
 	{
-		player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+		ACTION_ADAPTERS.add(new IronsSpellbooksAdapter());
+		ACTION_ADAPTERS.add(new MowzieAbilityAdapter());
+		ACTION_ADAPTERS.add(new AquamiraePlayAdapter());
+		ACTION_ADAPTERS.add(new MutantMethodAdapter());
+		ACTION_ADAPTERS.add(new GenericFieldAnimationAdapter());
+	}
+	
+	public static void selectAnimation(LivingEntity owner, String animationName)
+	{
+		owner.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 		{
 			t.selectAnimation(animationName);
 		});
 	}
 	
-	public static void selectGoal(Player player, String goalName)
+	public static void selectGoal(LivingEntity owner, String goalName)
 	{
-		player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+		owner.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 		{
 			t.selectGoal(goalName);
 		});
 	}
 	
-	public static void triggerGoal(Player player)
+	public static void selectOption(ServerPlayer sender, UUID ownerUuid, MorphSelectionType selectionType, int selectionId, int revision)
 	{
-		player.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
+		if(sender == null || !sender.getUUID().equals(ownerUuid))
 		{
-			if(t.getMorph() != null && t.getSelectedGoal() != null)
+			sendClientWarning(sender, "minsmorph.sync.invalid_owner");
+			return;
+		}
+		selectOption(sender, selectionType, selectionId, revision);
+	}
+
+	public static void selectOption(LivingEntity owner, MorphSelectionType selectionType, int selectionId, int revision)
+	{
+		owner.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
+		{
+			if(t.getOptionsRevision() != revision)
 			{
-				String goalName = t.getSelectedGoal();
-				String animationName = t.getSelectedAnimation();
-				Mob mob = (Mob) t.getMorph();
-				Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
-				List<WrappedGoal> list = Lists.newArrayList(set);
-				for(WrappedGoal goal : set)
+				if(owner instanceof ServerPlayer serverPlayer)
 				{
-					int index = list.indexOf(goal);
-					char lastChar = goalName.charAt(goalName.length() - 1);
-					String name = MorphUtil.getGoalName(goal.getGoal());
-					if(index == Character.getNumericValue(lastChar) || name.equals(goalName))
-					{
-						((IWrappedGoal) goal).setCanUse();
-						MorphUtil.setTarget(player, mob, goal, t.getFakeTarget());
-						MorphUtil.setAnimation(mob, animationName);
-						goal.start();
-						break;
-					}
+					sendClientWarning(serverPlayer, "minsmorph.sync.stale");
+				}
+				syncOptions(owner);
+				return;
+			}
+			if(selectionType == MorphSelectionType.GOAL)
+			{
+				List<String> goals = t.getGoalOptions();
+				if(selectionId >= 0 && selectionId < goals.size())
+				{
+					t.setSelectedGoalId(selectionId);
+					t.selectGoal(goals.get(selectionId));
+					syncOptions(owner);
+				}
+				else if(owner instanceof ServerPlayer serverPlayer)
+				{
+					sendClientWarning(serverPlayer, "minsmorph.sync.invalid_selection");
+				}
+			}
+			else if(selectionType == MorphSelectionType.ANIMATION)
+			{
+				List<String> animations = t.getAnimationOptions();
+				if(selectionId >= 0 && selectionId < animations.size())
+				{
+					t.setSelectedAnimationId(selectionId);
+					t.selectAnimation(animations.get(selectionId));
+					syncOptions(owner);
+				}
+				else if(owner instanceof ServerPlayer serverPlayer)
+				{
+					sendClientWarning(serverPlayer, "minsmorph.sync.invalid_selection");
 				}
 			}
 		});
 	}
-	public static void setTarget(LivingEntity owner, Mob morph, LivingEntity fakeTarget)
+
+	public static void triggerGoal(LivingEntity owner)
 	{
-		morph.setTarget(fakeTarget);
-		HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(owner, entity -> !entity.isAlliedTo(owner), 30.0F);
-		if(hitResult instanceof EntityHitResult entityHit)
+		owner.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t -> 
 		{
-			if(entityHit.getEntity() instanceof LivingEntity living)
+			String goalName = t.getSelectedGoal();
+			String animationName = t.getSelectedAnimation();
+			if(t.getMorph() instanceof Mob mob && (goalName == null || goalName.isBlank()) && animationName != null && !animationName.isBlank())
 			{
-				morph.setTarget(living);
+				if(!triggerAnimationOnly(owner, mob, animationName))
+				{
+					if(owner instanceof ServerPlayer serverPlayer)
+					{
+						sendClientWarning(serverPlayer, "minsmorph.sync.unsupported_action");
+					}
+				}
+				return;
+			}
+			if(t.getMorph() instanceof Mob mob && goalName != null && !goalName.isBlank())
+			{
+				LivingEntity realTarget = findRealTarget(owner);
+				LivingEntity fallbackTarget = realTarget != null ? null : createEphemeralFakeTarget(owner);
+				if(realTarget == null && (fallbackTarget == null || !fallbackTarget.isAlive()))
+				{
+					if(owner instanceof ServerPlayer serverPlayer)
+					{
+						sendClientWarning(serverPlayer, "minsmorph.sync.missing_target");
+					}
+					syncOptions(owner);
+					return;
+				}
+				Set<WrappedGoal> set = mob.goalSelector.getAvailableGoals();
+				List<WrappedGoal> list = Lists.newArrayList(set);
+				String normalizedGoalName = goalName.trim();
+				int expectedIndex = getGoalIndexSuffix(normalizedGoalName);
+				String baseGoalName = removeGoalIndexSuffix(normalizedGoalName);
+				boolean triggeredGoal = false;
+				for(WrappedGoal goal : set)
+				{
+					int index = list.indexOf(goal);
+					String name = MorphUtil.getGoalName(goal.getGoal());
+					boolean indexMatched = expectedIndex >= 0 && index == expectedIndex && name.equals(baseGoalName);
+					if(indexMatched || name.equals(normalizedGoalName))
+					{
+						mob.getPersistentData().putInt(MANUAL_TRIGGER_TICKS_KEY, 20);
+						((IWrappedGoal) goal).setCanUse();
+						MorphUtil.setTarget(owner, mob, goal, fallbackTarget, realTarget);
+						MorphUtil.setAnimation(mob, animationName);
+						try
+						{
+							// Prefer normal GoalSelector path so goals that rely on selector-managed state can initialize properly.
+							mob.goalSelector.tick();
+							if(!goal.isRunning())
+							{
+								goal.start();
+							}
+							// Some custom goals (e.g. teleport-type goals) require at least one tick after start.
+							if(goal.isRunning())
+							{
+								goal.tick();
+							}
+						}
+						catch(Exception e)
+						{
+							goal.stop();
+							mob.setTarget(null);
+							if(owner instanceof ServerPlayer serverPlayer)
+							{
+								sendClientWarning(serverPlayer, "minsmorph.sync.goal_failed");
+							}
+						}
+						triggeredGoal = true;
+						break;
+					}
+				}
+				if(!triggeredGoal && owner instanceof ServerPlayer serverPlayer)
+				{
+					sendClientWarning(serverPlayer, "minsmorph.sync.unsupported_action");
+				}
+			}
+		});
+	}
+
+	private static LivingEntity createEphemeralFakeTarget(LivingEntity owner)
+	{
+		if(owner.level.isClientSide)
+		{
+			return null;
+		}
+		EntityFakeTarget fakeTarget = new EntityFakeTarget(MorphEntities.FAKE_TARGET.get(), owner.level);
+		fakeTarget.setOwner(owner);
+		fakeTarget.setLifeTicks(20);
+		owner.level.addFreshEntity(fakeTarget);
+		return fakeTarget;
+	}
+
+	private static LivingEntity findRealTarget(LivingEntity owner)
+	{
+		HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(owner, entity -> !entity.isAlliedTo(owner), 30.0F);
+		if(hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity living)
+		{
+			return living;
+		}
+		return null;
+	}
+
+	private static boolean triggerAnimationOnly(LivingEntity owner, Mob mob, String animationName)
+	{
+		boolean success = setAnimation(mob, animationName);
+		if(!success && owner instanceof ServerPlayer serverPlayer)
+		{
+			sendClientWarning(serverPlayer, "minsmorph.sync.adapter_failed");
+		}
+		return success;
+	}
+
+	public static void triggerGoal(ServerPlayer sender, UUID ownerUuid, int revision)
+	{
+		if(sender == null || !sender.getUUID().equals(ownerUuid))
+		{
+			sendClientWarning(sender, "minsmorph.sync.invalid_owner");
+			return;
+		}
+		sender.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
+		{
+			if(t.getOptionsRevision() != revision)
+			{
+				sendClientWarning(sender, "minsmorph.sync.stale");
+				syncOptions(sender);
+				return;
+			}
+			List<String> goals = t.getGoalOptions();
+			int selectedGoalId = t.getSelectedGoalId();
+			if(selectedGoalId < 0 || selectedGoalId >= goals.size())
+			{
+				sendClientWarning(sender, "minsmorph.sync.no_goal_selected");
+				syncOptions(sender);
+				return;
+			}
+			selectGoal(sender, goals.get(selectedGoalId));
+			int selectedAnimationId = t.getSelectedAnimationId();
+			List<String> animations = t.getAnimationOptions();
+			if(selectedAnimationId >= 0 && selectedAnimationId < animations.size())
+			{
+				selectAnimation(sender, animations.get(selectedAnimationId));
+			}
+			triggerGoal((LivingEntity) sender);
+		});
+	}
+
+	public static boolean selectGoalByName(LivingEntity owner, String goalName)
+	{
+		if(goalName == null || goalName.isBlank())
+		{
+			return false;
+		}
+		IMorphCapability cap = owner.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(owner));
+		int selectionId = cap.getGoalOptions().indexOf(goalName);
+		if(selectionId < 0)
+		{
+			return false;
+		}
+		selectOption(owner, MorphSelectionType.GOAL, selectionId, cap.getOptionsRevision());
+		return true;
+	}
+
+	public static boolean selectAnimationByName(LivingEntity owner, String animationName)
+	{
+		if(animationName == null || animationName.isBlank())
+		{
+			return false;
+		}
+		IMorphCapability cap = owner.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(owner));
+		int selectionId = cap.getAnimationOptions().indexOf(animationName);
+		if(selectionId < 0)
+		{
+			return false;
+		}
+		selectOption(owner, MorphSelectionType.ANIMATION, selectionId, cap.getOptionsRevision());
+		return true;
+	}
+
+	private static void sendClientWarning(ServerPlayer player, String translationKey)
+	{
+		if(player != null)
+		{
+			player.displayClientMessage(Component.translatable(translationKey), true);
+		}
+	}
+
+	private static int getGoalIndexSuffix(String goalName)
+	{
+		Matcher matcher = GOAL_INDEX_PATTERN.matcher(goalName);
+		if(matcher.matches())
+		{
+			try
+			{
+				return Integer.parseInt(matcher.group(2));
+			}
+			catch(NumberFormatException ignored)
+			{
+				
 			}
 		}
+		return -1;
+	}
+
+	private static String removeGoalIndexSuffix(String goalName)
+	{
+		Matcher matcher = GOAL_INDEX_PATTERN.matcher(goalName);
+		if(matcher.matches())
+		{
+			return matcher.group(1);
+		}
+		return goalName;
+	}
+	public static void setTarget(LivingEntity owner, Mob morph, LivingEntity fakeTarget)
+	{
+		setTarget(owner, morph, null, fakeTarget, null);
 	}
 	
 	public static void setTarget(LivingEntity owner, Mob morph, WrappedGoal goal, LivingEntity fakeTarget)
 	{
-		((IWrappedGoal) goal).setFakeTarget(fakeTarget);
-		morph.setTarget(fakeTarget);
-		HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(owner, entity -> !entity.isAlliedTo(owner), 30.0F);
-		if(hitResult instanceof EntityHitResult entityHit)
+		setTarget(owner, morph, goal, fakeTarget, null);
+	}
+
+	public static void setTarget(LivingEntity owner, Mob morph, WrappedGoal goal, LivingEntity fakeTarget, LivingEntity preferredTarget)
+	{
+		if(goal != null && fakeTarget != null)
 		{
-			if(entityHit.getEntity() instanceof LivingEntity living)
+			((IWrappedGoal) goal).setFakeTarget(fakeTarget);
+		}
+		if(preferredTarget != null)
+		{
+			if(goal != null)
+			{
+				((IWrappedGoal) goal).setTarget(preferredTarget);
+			}
+			morph.setTarget(preferredTarget);
+			return;
+		}
+		HitResult hitResult = ProjectileUtil.getHitResultOnViewVector(owner, entity -> !entity.isAlliedTo(owner), 30.0F);
+		if(hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() instanceof LivingEntity living)
+		{
+			if(goal != null)
 			{
 				((IWrappedGoal) goal).setTarget(living);
-				morph.setTarget(living);
 			}
+			morph.setTarget(living);
+			return;
+		}
+		if(fakeTarget != null)
+		{
+			morph.setTarget(fakeTarget);
 		}
 	}
 	
@@ -165,6 +443,21 @@ public class MorphUtil
 		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(new MorphCapabilityImpl(living));
 		return cap.getMorph() != null;
 	}
+
+	public static void syncOptions(LivingEntity owner)
+	{
+		if(owner.level.isClientSide)
+		{
+			return;
+		}
+		owner.getCapability(MorphCapabilityImpl.MORPH).ifPresent(t ->
+		{
+			if(owner instanceof ServerPlayer serverPlayer)
+			{
+				MorphNetwork.sendToPlayer(new SyncMorphOptionsPacket(owner.getUUID(), t.getOptionsRevision(), t.getGoalOptions(), t.getAnimationOptions(), t.getDataOptions(), t.getSelectedGoalId(), t.getSelectedAnimationId()), serverPlayer);
+			}
+		});
+	}
 	
 	public static void removeMorph(LivingEntity living)
 	{
@@ -202,11 +495,15 @@ public class MorphUtil
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static void setData(Mob mob, String dataName, String dataValue)
+	public static boolean setData(Mob mob, String dataName, String dataValue)
 	{
 		try
 		{
-			Field f = mob.getClass().getDeclaredField(dataName);
+			Field f = findFieldInHierarchy(mob.getClass(), dataName);
+			if(f == null)
+			{
+				return false;
+			}
 			f.setAccessible(true);
             if(dataValue.equalsIgnoreCase("true") || dataValue.equalsIgnoreCase("false")) 
             {
@@ -214,6 +511,7 @@ public class MorphUtil
             	if(accessor.getSerializer() == EntityDataSerializers.BOOLEAN)
             	{
             		mob.getEntityData().set(accessor, Boolean.parseBoolean(dataValue));
+            		return true;
             	}
             }
             else if(dataValue.contains("."))
@@ -225,6 +523,7 @@ public class MorphUtil
                 	if(accessor.getSerializer() == EntityDataSerializers.FLOAT)
                 	{
                     	mob.getEntityData().set(accessor, value);
+                    	return true;
                 	}
                 }
                 catch (NumberFormatException e)
@@ -241,6 +540,7 @@ public class MorphUtil
                 	if(accessor.getSerializer() == EntityDataSerializers.INT)
                 	{
                     	mob.getEntityData().set(accessor, value);
+                    	return true;
                 	}
                 }
                 catch (NumberFormatException e)
@@ -249,57 +549,70 @@ public class MorphUtil
                 	if(accessor.getSerializer() == EntityDataSerializers.STRING)
                 	{
                     	mob.getEntityData().set(accessor, dataValue);
+                    	return true;
                 	}
                 }
             }
 		}
-		catch (SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException e)
+		catch (SecurityException | IllegalAccessException | IllegalArgumentException e)
 		{
 			
 		}
+		return false;
 	}
 	
-	public static void setAnimation(Mob mob, String animationName)
+	public static boolean setAnimation(Mob mob, String animationName)
     {
-		//Citadel/LLibrary/Lionfish API/EEEAB's Mobs
-		try
+		if(animationName == null || animationName.isBlank())
 		{
-			Field f = mob.getClass().getDeclaredField(animationName);
-			Method m = mob.getClass().getMethod("setAnimation", f.getType());
-			f.setAccessible(true);
-			m.invoke(mob, f.get(mob));
+			return false;
 		}
-		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
+		for(MobActionAdapter adapter : ACTION_ADAPTERS)
 		{
-			
+			if(adapter.supports(mob))
+			{
+				boolean success = adapter.execute(mob, animationName);
+				if(success)
+				{
+					return true;
+				}
+			}
 		}
-		//Mowzie
-		//FIXME not working;
-		try
-		{
-			Field f = mob.getClass().getDeclaredField(animationName);
-			Method m = mob.getClass().getMethod("sendAbilityMessage", f.getType());
-			f.setAccessible(true);
-			m.invoke(mob, f.get(mob));
-		}
-		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchFieldException e)
-		{
-			
-		}
-		//Aquamirae
-		//TODO proper tick input, trigger without goal name;
-		try
-		{
-			Field f = mob.getClass().getDeclaredField(animationName);
-			f.setAccessible(true);
-			Method m = f.getType().getMethod("play", Entity.class, int.class);
-			m.invoke(f.get(mob), mob, 100);
-		}
-		catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | NoSuchFieldException | InvocationTargetException e)
-		{
-			
-		}
+		return false;
     }
+
+	private static Field findFieldInHierarchy(Class<?> clazz, String fieldName)
+	{
+		Class<?> current = clazz;
+		while(current != null && current != Object.class)
+		{
+			try
+			{
+				return current.getDeclaredField(fieldName);
+			}
+			catch(NoSuchFieldException ignored)
+			{
+				current = current.getSuperclass();
+			}
+		}
+		return null;
+	}
+
+	private static Method findMethodAssignable(Class<?> clazz, String methodName, Class<?> paramType)
+	{
+		for(Method method : clazz.getMethods())
+		{
+			if(method.getName().equals(methodName) && method.getParameterCount() == 1)
+			{
+				Class<?> expected = method.getParameterTypes()[0];
+				if(expected.isAssignableFrom(paramType))
+				{
+					return method;
+				}
+			}
+		}
+		return null;
+	}
 	
 	public static List<String> getDatas(Class<?> clazz)
 	{
@@ -346,26 +659,14 @@ public class MorphUtil
 	public static List<String> getAnimations(Class<?> clazz)
 	{
 		List<String> list = new ArrayList<>();
-		for(Field f : clazz.getDeclaredFields())
+		for(MobActionAdapter adapter : ACTION_ADAPTERS)
 		{
-			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
+			for(String action : adapter.scan(clazz))
 			{
-				list.add(f.getName());
-			}
-		}
-		for(Field f : clazz.getSuperclass().getDeclaredFields())
-		{
-			if(f.getType().getSimpleName().contains("Animation") && !f.getType().isArray())
-			{
-				list.add(f.getName());
-			}
-		}
-		//Mowzie
-		for(Field f : clazz.getDeclaredFields())
-		{
-			if(f.getType().getSimpleName().contains("AbilityType") && !f.getType().isArray())
-			{
-				list.add(f.getName());
+				if(!list.contains(action))
+				{
+					list.add(action);
+				}
 			}
 		}
 		return list;
@@ -450,6 +751,14 @@ public class MorphUtil
 		}
 		else
 		{
+    		if(morph instanceof Mob mob && mob.getPersistentData().contains(MANUAL_TRIGGER_TICKS_KEY))
+    		{
+    			int ticks = mob.getPersistentData().getInt(MANUAL_TRIGGER_TICKS_KEY);
+    			if(ticks > 0)
+    			{
+    				mob.getPersistentData().putInt(MANUAL_TRIGGER_TICKS_KEY, ticks - 1);
+    			}
+    		}
 	    	sync(morph, player);
 			for(Entity entity : morph.getPassengers())
 			{
@@ -550,7 +859,15 @@ public class MorphUtil
         if(i % 2 != 0 && mob.tickCount > 1)
         {
         	mob.level.getProfiler().push("goalSelector");
-        	mob.goalSelector.tickRunningGoals(false);
+        	try
+        	{
+            	mob.goalSelector.tickRunningGoals(false);
+        	}
+        	catch(Exception e)
+        	{
+        		e.printStackTrace();
+        		mob.setTarget(null);
+        	}
         	mob.level.getProfiler().pop();
         }
         else 
@@ -606,6 +923,78 @@ public class MorphUtil
     	}
     	return null;
     }
+
+	public static boolean areFriendly(Entity attacker, Entity target)
+	{
+		if(attacker == null || target == null)
+		{
+			return false;
+		}
+		if(attacker == target)
+		{
+			return true;
+		}
+		Entity attackerOwner = MorphUtil.getMorphOwner(attacker);
+		Entity targetOwner = MorphUtil.getMorphOwner(target);
+		Entity attackerRoot = attackerOwner != null ? attackerOwner : attacker;
+		Entity targetRoot = targetOwner != null ? targetOwner : target;
+		if(attackerRoot == targetRoot)
+		{
+			return true;
+		}
+		// Do not call isAlliedTo() here: this method is used by our isAlliedTo mixin.
+		if(attackerRoot.getTeam() != null && attackerRoot.getTeam() == targetRoot.getTeam())
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean shouldCancelMorphTarget(Mob attacker, LivingEntity target)
+	{
+		if(target == null)
+		{
+			return false;
+		}
+		LivingEntity effectiveTarget = getEffectiveLivingTarget(target);
+		if(areFriendly(attacker, target))
+		{
+			return true;
+		}
+		Entity attackerOwner = MorphUtil.getMorphOwner(attacker);
+		Entity targetOwner = MorphUtil.getMorphOwner(effectiveTarget);
+		boolean morphInvolved = attackerOwner != null || targetOwner != null;
+		if(!morphInvolved)
+		{
+			return false;
+		}
+		EntityType<?> attackerType = getEffectiveType(attacker);
+		EntityType<?> targetType = getEffectiveType(effectiveTarget);
+		return attackerType != null && attackerType == targetType;
+	}
+
+	public static LivingEntity getEffectiveLivingTarget(LivingEntity living)
+	{
+		IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(null);
+		if(cap != null && cap.getMorph() != null)
+		{
+			return cap.getMorph();
+		}
+		return living;
+	}
+
+	private static EntityType<?> getEffectiveType(Entity entity)
+	{
+		if(entity instanceof LivingEntity living)
+		{
+			IMorphCapability cap = living.getCapability(MorphCapabilityImpl.MORPH).orElse(null);
+			if(cap != null && cap.getMorph() != null)
+			{
+				return cap.getMorph().getType();
+			}
+		}
+		return entity.getType();
+	}
     
 	@SuppressWarnings("unchecked")
 	public static Entity getEntityByUUID(Level level, UUID uuid)
@@ -620,5 +1009,233 @@ public class MorphUtil
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private interface MobActionAdapter
+	{
+		boolean supports(Mob mob);
+		boolean execute(Mob mob, String actionName);
+		List<String> scan(Class<?> clazz);
+	}
+
+	private static class GenericFieldAnimationAdapter implements MobActionAdapter
+	{
+		@Override
+		public boolean supports(Mob mob)
+		{
+			return true;
+		}
+
+		@Override
+		public boolean execute(Mob mob, String actionName)
+		{
+			Field field = findFieldInHierarchy(mob.getClass(), actionName);
+			if(field == null)
+			{
+				return false;
+			}
+			try
+			{
+				Method method = findMethodAssignable(mob.getClass(), "setAnimation", field.getType());
+				if(method != null)
+				{
+					field.setAccessible(true);
+					method.invoke(mob, field.get(Modifier.isStatic(field.getModifiers()) ? null : mob));
+					return true;
+				}
+			}
+			catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+			{
+				
+			}
+			return false;
+		}
+
+		@Override
+		public List<String> scan(Class<?> clazz)
+		{
+			List<String> actions = new ArrayList<>();
+			Class<?> current = clazz;
+			while(current != null && current != Object.class)
+			{
+				for(Field field : current.getDeclaredFields())
+				{
+					String simple = field.getType().getSimpleName();
+					if((simple.contains("Animation") || simple.contains("AbilityType")) && !field.getType().isArray() && !actions.contains(field.getName()))
+					{
+						actions.add(field.getName());
+					}
+				}
+				current = current.getSuperclass();
+			}
+			return actions;
+		}
+	}
+
+	private static class MowzieAbilityAdapter implements MobActionAdapter
+	{
+		@Override
+		public boolean supports(Mob mob)
+		{
+			return mob.getClass().getName().toLowerCase().contains("mowz");
+		}
+
+		@Override
+		public boolean execute(Mob mob, String actionName)
+		{
+			Field field = findFieldInHierarchy(mob.getClass(), actionName);
+			if(field == null)
+			{
+				return false;
+			}
+			try
+			{
+				Method method = findMethodAssignable(mob.getClass(), "sendAbilityMessage", field.getType());
+				if(method != null)
+				{
+					field.setAccessible(true);
+					method.invoke(mob, field.get(Modifier.isStatic(field.getModifiers()) ? null : mob));
+					return true;
+				}
+			}
+			catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+			{
+				
+			}
+			return false;
+		}
+
+		@Override
+		public List<String> scan(Class<?> clazz)
+		{
+			return Collections.emptyList();
+		}
+	}
+
+	private static class AquamiraePlayAdapter implements MobActionAdapter
+	{
+		@Override
+		public boolean supports(Mob mob)
+		{
+			return mob.getClass().getName().toLowerCase().contains("aquamirae");
+		}
+
+		@Override
+		public boolean execute(Mob mob, String actionName)
+		{
+			Field field = findFieldInHierarchy(mob.getClass(), actionName);
+			if(field == null)
+			{
+				return false;
+			}
+			try
+			{
+				field.setAccessible(true);
+				Object animation = field.get(Modifier.isStatic(field.getModifiers()) ? null : mob);
+				if(animation != null)
+				{
+					Method play = animation.getClass().getMethod("play", Entity.class, int.class);
+					play.invoke(animation, mob, 20);
+					return true;
+				}
+			}
+			catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+			{
+				
+			}
+			return false;
+		}
+
+		@Override
+		public List<String> scan(Class<?> clazz)
+		{
+			return Collections.emptyList();
+		}
+	}
+
+	private static class MutantMethodAdapter implements MobActionAdapter
+	{
+		@Override
+		public boolean supports(Mob mob)
+		{
+			String className = mob.getClass().getName().toLowerCase();
+			return className.contains("mutant") || className.contains("irons_spellbooks") || className.contains("spellbook");
+		}
+
+		@Override
+		public boolean execute(Mob mob, String actionName)
+		{
+			String methodName = actionName.startsWith("M_") ? actionName.substring(2) : actionName;
+			for(Method method : mob.getClass().getMethods())
+			{
+				if(method.getName().equals(methodName))
+				{
+					try
+					{
+						if(method.getParameterCount() == 0)
+						{
+							method.invoke(mob);
+							return true;
+						}
+						if(method.getParameterCount() == 1 && method.getParameterTypes()[0].isAssignableFrom(Entity.class))
+						{
+							method.invoke(mob, mob);
+							return true;
+						}
+					}
+					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+					{
+						
+					}
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public List<String> scan(Class<?> clazz)
+		{
+			String className = clazz.getName().toLowerCase();
+			if(!(className.contains("mutant") || className.contains("irons_spellbooks") || className.contains("spellbook")))
+			{
+				return Collections.emptyList();
+			}
+			List<String> methods = new ArrayList<>();
+			for(Method method : clazz.getMethods())
+			{
+				String name = method.getName().toLowerCase();
+				if(method.getParameterCount() <= 1 && (name.contains("spell") || name.contains("ability") || name.contains("animation")))
+				{
+					String key = "M_" + method.getName();
+					if(!methods.contains(key))
+					{
+						methods.add(key);
+					}
+				}
+			}
+			return methods;
+		}
+	}
+
+	private static class IronsSpellbooksAdapter implements MobActionAdapter
+	{
+		@Override
+		public boolean supports(Mob mob)
+		{
+			String className = mob.getClass().getName().toLowerCase();
+			return className.contains("irons_spellbooks") || className.contains("spellbook");
+		}
+
+		@Override
+		public boolean execute(Mob mob, String actionName)
+		{
+			return new MutantMethodAdapter().execute(mob, actionName);
+		}
+
+		@Override
+		public List<String> scan(Class<?> clazz)
+		{
+			return new MutantMethodAdapter().scan(clazz);
+		}
 	}
 }
