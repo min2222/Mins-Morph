@@ -9,7 +9,6 @@
 		"MixinChunkMap",
 		"MixinServerEntity",
 		"MixinEntity",
-		"MixinEntityGetter",
 		"MixinWrappedGoal",
 		"MixinTargetGoal",
 		"MixinLevelEntityGetterAdapter",
